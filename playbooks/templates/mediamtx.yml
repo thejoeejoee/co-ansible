@@ -34,24 +34,24 @@ paths:
 
 authInternalUsers:
 - user: pocket
-  pass: "{{ csos_media_write_pass}}"
+  pass: "{{ csos_stream_proxy__write_pass}}"
   permissions:
   - action: publish
   - action: read
 
 - user: drone
-  pass: "{{ csos_media_write_pass }}"
+  pass: "{{ csos_stream_proxy__write_pass }}"
   permissions:
   - action: publish
   - action: read
 
 - user: mobile
-  pass: "{{ csos_media_write_pass }}"
+  pass: "{{ csos_stream_proxy__write_pass }}"
   permissions:
   - action: publish
   - action: read
 
 - user: vmix
-  pass: "{{ csos_media_write_pass }}"
+  pass: "{{ csos_stream_proxy__read_pass }}"
   permissions:
   - action: read
