@@ -1,0 +1,6 @@
+csos:
+  hosts:
+    csos.josefkolar.cz:
+
+  vars:
+    ansible_user: root

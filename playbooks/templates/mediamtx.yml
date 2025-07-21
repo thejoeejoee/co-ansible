@@ -1,0 +1,57 @@
+rtmp: yes
+# upstream feeds
+rtmpAddress: 0.0.0.0:1935
+
+hls: yes
+# previews/debugs
+hlsAddress: 0.0.0.0:8888
+
+srt: true
+# downstream feeds
+srtAddress: 0.0.0.0:8890
+
+webrtc: false
+rtsp: false
+
+paths:
+#  macos-stream: {}
+  # dji pockets
+  pocket1: {}
+  pocket2: {}
+
+  # dji rc pro
+  drone: {}
+
+  # "IRL smth" Android app requires "x/" prefix to work
+  x/mobile1: {}
+  x/mobile2: {}
+  x/mobile3: {}
+  x/mobile4: {}
+  x/mobile5: {}
+
+  insta1: {}
+  x/insta1: {}
+
+authInternalUsers:
+- user: pocket
+  pass: "{{ csos_media_write_pass}}"
+  permissions:
+  - action: publish
+  - action: read
+
+- user: drone
+  pass: "{{ csos_media_write_pass }}"
+  permissions:
+  - action: publish
+  - action: read
+
+- user: mobile
+  pass: "{{ csos_media_write_pass }}"
+  permissions:
+  - action: publish
+  - action: read
+
+- user: vmix
+  pass: "{{ csos_media_write_pass }}"
+  permissions:
+  - action: read

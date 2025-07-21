@@ -1,0 +1,15 @@
+[Unit]
+After=network.target
+Description=CSOS media proxy server
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/bin/mediamtx
+
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

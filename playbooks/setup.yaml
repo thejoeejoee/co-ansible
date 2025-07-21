@@ -1,0 +1,73 @@
+- name: Setup CSOS media proxy
+  hosts: csos
+  tasks:
+    - name: Apt update
+      become: true
+      apt:
+        update_cache: yes
+
+    - name: Download mediamtx
+      unarchive:
+        src: https://github.com/bluenviron/mediamtx/releases/download/v1.13.0/mediamtx_v1.13.0_linux_amd64.tar.gz
+        dest: /tmp
+        remote_src: yes
+
+    - name: Install mediamtx
+      copy:
+        remote_src: yes
+        src: /tmp/mediamtx
+        dest: /usr/local/bin/mediamtx
+        mode: '0755'
+
+    - name: UFW allow RTMP
+      ufw:
+        rule: allow
+        port: 1935
+        proto: tcp
+
+    - name: UFW allow HLS
+      ufw:
+        rule: allow
+        port: 8888
+        proto: tcp
+
+    - name: UFW allow SRT
+      ufw:
+        rule: allow
+        port: 8890
+        proto: udp
+
+    - name: Prepare mediamtx config directory
+      file:
+        path: /etc/mediamtx
+        state: directory
+
+    - name: Prepare config
+      template:
+        src: mediamtx.yml
+        dest: /etc/mediamtx/mediamtx.yml
+        mode: '0644'
+
+    - name: Mediamtx systemd service is prepared
+      become: true
+      template:
+        src: mediamtx.service
+        dest: /usr/lib/systemd/system/csos-mediamtx.service
+
+    - name: Mediamtx systemd service is reloaded
+      become: true
+      systemd:
+        daemon_reload: true
+
+    - name: Mediamtx systemd service is enabled
+      become: true
+      systemd:
+        name: csos-mediamtx.service
+        enabled: true
+        state: started
+
+    - name: Mediamtx systemd service is started
+      become: true
+      systemd:
+        name: csos-mediamtx.service
+        state: started
