@@ -1,4 +1,4 @@
-- name: Setup CSOS media proxy
+- name: Setup CSOS stream proxy
   hosts: csos
   tasks:
     - name: Apt update

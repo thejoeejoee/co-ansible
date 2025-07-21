@@ -1,6 +1,6 @@
 [Unit]
 After=network.target
-Description=CSOS media proxy server
+Description=CSOS stream proxy server
 
 [Service]
 Type=simple
