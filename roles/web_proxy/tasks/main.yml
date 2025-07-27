@@ -1,0 +1,21 @@
+- name: UFW allow 80
+  tags: [base]
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+
+- name: UFW allow 443
+  tags: [base]
+  ufw:
+    rule: allow
+    port: 443
+    proto: tcp
+
+- include_role:
+    name: caddy_ansible.caddy_ansible
+  vars:
+    caddy_conf_filename: Caddyfile
+    caddy_config: "{{ lookup('template', 'templates/Caddyfile.j2') }}"
+
+    caddy_systemd_restart_startlimitinterval: 60

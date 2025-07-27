@@ -1,0 +1,93 @@
+logLevel: info
+
+# upstream feeds
+rtmp: yes
+rtmpAddress: 0.0.0.0:1935
+
+# previews/debugs
+hls: yes
+hlsAddress: localhost:8888
+
+# previews/debugs
+webrtc: true
+webrtcAddress: localhost:8889
+webrtcLocalUDPAddress: 0.0.0.0:8189
+
+# downstream feeds
+srt: true
+srtAddress: 0.0.0.0:8890
+
+# if needed, check all the needed ports with ufw
+rtsp: no
+
+metrics: yes
+metricsAddress: localhost:9998
+
+pathDefaults:
+  # TODO: nope, does not work like that,
+  # see https://github.com/bluenviron/mediamtx/issues/2214
+  # fallback: /_fallback
+
+paths:
+# TODO: see above, currently not working with mediamtx
+#  _fallback:
+#    runOnInit: >
+#      ffmpeg -re -loop 1 -framerate 25
+#      -i /etc/mediamtx/co-stream-proxy-no-signal.png
+#      -c:v libx264 -profile:v baseline -tune zerolatency -preset ultrafast
+#      -pix_fmt yuv420p -vf scale=1920:1080
+#      -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
+#    runOnInitRestart: yes
+
+  macos-stream: {}
+  # dji pockets
+  pocket1: {}
+  pocket2: {}
+
+  # dji rc pro
+  drone1: {}
+  x/drone1: {}
+
+  # "IRL smth" Android app requires "x/" prefix to work
+  x/mobile1: {}
+  x/mobile2: {}
+  x/mobile3: {}
+  x/mobile4: {}
+  x/mobile5: {}
+
+  insta1: {}
+  x/insta1: {}
+
+authInternalUsers:
+- user: pocket
+  pass: "{{ csos_stream_proxy__write_pass}}"
+  permissions:
+  - action: publish
+  - action: read
+
+- user: drone
+  pass: "{{ csos_stream_proxy__write_pass }}"
+  permissions:
+  - action: publish
+  - action: read
+
+- user: mobile
+  pass: "{{ csos_stream_proxy__write_pass }}"
+  permissions:
+  - action: publish
+  - action: read
+
+- user: vmix
+  pass: "{{ csos_stream_proxy__read_pass }}"
+  permissions:
+  - action: read
+
+- user: any
+  pass:
+  ips: ['127.0.0.1', '::1']
+  permissions:
+  - action: api
+  - action: metrics
+  - action: pprof
+  - action: publish
+  - action: read

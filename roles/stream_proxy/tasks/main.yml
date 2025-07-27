@@ -1,0 +1,77 @@
+- name: Download mediamtx
+  unarchive:
+    src: https://github.com/bluenviron/mediamtx/releases/download/v1.13.1/mediamtx_v1.13.1_linux_amd64.tar.gz
+    dest: /tmp
+    remote_src: yes
+
+- name: Install mediamtx
+  copy:
+    remote_src: yes
+    src: /tmp/mediamtx
+    dest: /usr/local/bin/mediamtx
+    mode: '0755'
+
+- name: UFW allow RTMP
+  ufw:
+    rule: allow
+    port: 1935
+    proto: tcp
+
+- name: UFW allow SRT
+  ufw:
+    rule: allow
+    port: 8890
+    proto: udp
+
+- name: UFW allow WebRTC UDP
+  ufw:
+    rule: allow
+    port: 8189
+    proto: udp
+
+- name: UFW allow WebRTC
+  ufw:
+    rule: allow
+    port: 8889
+    proto: tcp
+
+- name: Prepare mediamtx config directory
+  file:
+    path: /etc/mediamtx
+    state: directory
+
+- name: Prepare config
+  template:
+    src: mediamtx.yml
+    dest: /etc/mediamtx/mediamtx.yml
+    mode: '0644'
+
+- name: Prepare fallback image
+  copy:
+    src: ../resources/co-stream-proxy-no-signal.png
+    dest: /etc/mediamtx/co-stream-proxy-no-signal.png
+    mode: '0644'
+
+- name: Mediamtx systemd service is prepared
+  become: true
+  template:
+    src: mediamtx.service
+    dest: /usr/lib/systemd/system/csos-mediamtx.service
+
+- name: Mediamtx systemd service is reloaded
+  become: true
+  systemd:
+    daemon_reload: true
+
+- name: Mediamtx systemd service is enabled
+  become: true
+  systemd:
+    name: csos-mediamtx.service
+    enabled: true
+    state: started
+
+- name: Mediamtx systemd service is started
+  become: true
+  systemd:
+    name: csos-mediamtx.service
+    state: started
