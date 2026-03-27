@@ -11,5 +11,7 @@
     - ffmpeg
 
 - name: Install Docker
-  include_role:
-    name: geerlingguy.docker
+  block:
+    - include_role:
+        name: geerlingguy.docker
+  become: true
