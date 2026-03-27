@@ -1,0 +1,15 @@
+- name: Apt update
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400
+- name: Install required packages
+  become: true
+  apt:
+    name:
+    - ffmpeg
+
+- name: Install Docker
+  include_role:
+    name: geerlingguy.docker

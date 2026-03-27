@@ -1,0 +1,10 @@
+services:
+  tallyarbiter:
+    image: josephdadams/tallyarbiter
+    ports:
+      - '127.0.0.1:4455:4455'
+    volumes:
+      - /home/ta/config:/app/config
+    environment:
+      - APPDATA=/app/config
+    restart: unless-stopped

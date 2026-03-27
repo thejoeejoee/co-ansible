@@ -1,12 +1,12 @@
-# ČSOS Stream Proxy Ansible
+# ČSOS Proxy Ansible
 
-Ansible playbook to deploy stream proxy server for ČSOS livestreaming purposes.
+Ansible playbook to deploy ČSOS livestreaming purposes server.
+
+## Stream proxy
 
 Uses mediamtx under the hood.
 
 Slot == unique identifier for single stream (in terminology of mediamtx it's called `path`)
-
-## Streaming
 
 Slots are configured in `playbooks/templates/mediamtx.yml` and are used as follows:
 
@@ -37,10 +37,10 @@ http://csos.josefkolar.cz:8888/SLOT/
 
 ## Deployment
 
-Tested on Ubuntu 24.04, deployed by Ansible -- see `playbooks/setup.yaml` and `playbooks/templates/` for details.
+Tested on Ubuntu 24.04, deployed by Ansible -- see `playbooks/setup.yml` and `playbooks/templates/` for details.
 
 ```shell
-ansible-playbook -i inventory/csos.yaml playbooks/setup.yaml \
+ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
   -e @secrets.enc --vault-password-file .pass.env
 ```
 

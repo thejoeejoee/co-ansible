@@ -1,0 +1,20 @@
+- name: Prepare /home/ta/ directory
+  file:
+    path: /home/ta/
+    state: directory
+
+- name: Prepare /home/ta/config directory
+  file:
+    path: /home/ta/config
+    state: directory
+
+- name: Prepare compose
+  template:
+    src: docker-compose.yml
+    dest: /home/ta/docker-compose.yml
+
+- name: Create and start services
+  community.docker.docker_compose_v2:
+    project_src: /home/ta/
+    files:
+    - docker-compose.yml
