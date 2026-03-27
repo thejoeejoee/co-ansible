@@ -1,12 +1,12 @@
 - name: UFW allow 80
-  tags: [base]
+  become: true
   ufw:
     rule: allow
     port: 80
     proto: tcp
 
 - name: UFW allow 443
-  tags: [base]
+  become: true
   ufw:
     rule: allow
     port: 443
