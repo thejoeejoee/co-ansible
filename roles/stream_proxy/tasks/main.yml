@@ -5,6 +5,7 @@
     remote_src: yes
 
 - name: Install mediamtx
+  become: true
   copy:
     remote_src: yes
     src: /tmp/mediamtx
@@ -12,41 +13,48 @@
     mode: '0755'
 
 - name: UFW allow RTMP
+  become: true
   ufw:
     rule: allow
     port: 1935
     proto: tcp
 
 - name: UFW allow SRT
+  become: true
   ufw:
     rule: allow
     port: 8890
     proto: udp
 
 - name: UFW allow WebRTC UDP
+  become: true
   ufw:
     rule: allow
     port: 8189
     proto: udp
 
 - name: UFW allow WebRTC
+  become: true
   ufw:
     rule: allow
     port: 8889
     proto: tcp
 
 - name: Prepare mediamtx config directory
+  become: true
   file:
     path: /etc/mediamtx
     state: directory
 
 - name: Prepare config
+  become: true
   template:
     src: mediamtx.yml
     dest: /etc/mediamtx/mediamtx.yml
     mode: '0644'
 
 - name: Prepare fallback image
+  become: true
   copy:
     src: ../resources/co-stream-proxy-no-signal.png
     dest: /etc/mediamtx/co-stream-proxy-no-signal.png
@@ -68,10 +76,4 @@
   systemd:
     name: csos-mediamtx.service
     enabled: true
-    state: started
-
-- name: Mediamtx systemd service is started
-  become: true
-  systemd:
-    name: csos-mediamtx.service
     state: started

@@ -60,7 +60,7 @@ paths:
 
 authInternalUsers:
 - user: pocket
-  pass: "{{ csos_stream_proxy__write_pass}}"
+  pass: "{{ csos_stream_proxy__write_pass }}"
   permissions:
   - action: publish
   - action: read

@@ -17,9 +17,9 @@
       import_role:
         name: ../roles/web_proxy
 
-    - tags: [ta]
-      import_role:
-        name: ../roles/ta
+    # - tags: [ta]
+    #   import_role:
+    #     name: ../roles/ta
 
     - tags: [telemetry]
       import_role:
