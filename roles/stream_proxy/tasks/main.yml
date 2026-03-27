@@ -1,4 +1,5 @@
 - name: Download mediamtx
+  become: true
   unarchive:
     src: https://github.com/bluenviron/mediamtx/releases/download/v1.13.1/mediamtx_v1.13.1_linux_amd64.tar.gz
     dest: /tmp
