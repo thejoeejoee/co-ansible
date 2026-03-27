@@ -1,0 +1,6 @@
+csos:
+  hosts:
+    orb:
+
+  vars:
+    ansible_user: csos
