@@ -58,3 +58,22 @@ ta.{{ web_proxy__domain }}, tally.{{ web_proxy__domain }} {
 {% endif %}
     reverse_proxy localhost:4455
 }
+
+gfx.{{ web_proxy__domain }} {
+{% if web_proxy__disable_tls | default(false) %}
+    tls internal
+{% endif %}
+    handle /_sse/* {
+        reverse_proxy localhost:{{ gfx__proxy_host_port }}
+    }
+
+    redir / {{ gfx__github_pages_url }}{uri} permanent
+
+    basic_auth {
+        {{ gfx__auth_user }} {{ gfx__auth_hash }}
+    }
+
+    handle {
+        reverse_proxy localhost:{{ gfx__control_host_port }}
+    }
+}
