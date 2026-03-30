@@ -56,6 +56,15 @@
             datasource: prometheus
   become: true
 
+- name: Deploy custom dashboards
+  copy:
+    src: mediamtx-dashboard.json
+    dest: /var/lib/grafana/dashboards/mediamtx.json
+    owner: grafana
+    group: grafana
+    mode: '0644'
+  become: true
+
 - name: Install Node Exporter
   block:
     - include_role:
