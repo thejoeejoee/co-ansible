@@ -4,25 +4,24 @@ Ansible project deploying a ČSOS livestreaming relay server on Ubuntu 24.04. Co
 
 ## Connecting streams
 
-Each stream has a **slot** — a unique identifier (mediamtx calls it a `path`).
+Each stream has a **slot** — a unique identifier (mediamtx calls it a `path`). RTMP for ingest (write), SRT for consumption (read).
 
-### Ingest (capture device → server)
+| Slot | Write (RTMP) | Read (SRT) | HLS |
+|------|-------------|------------|-----|
+| `macos-stream` | `rtmp://csos.josefkolar.cz:1935/macos-stream?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:macos-stream:USER:PASS` | `https://csos.josefkolar.cz/hls/macos-stream/` |
+| `pocket1` | `rtmp://csos.josefkolar.cz:1935/pocket1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:pocket1:USER:PASS` | `https://csos.josefkolar.cz/hls/pocket1/` |
+| `pocket2` | `rtmp://csos.josefkolar.cz:1935/pocket2?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:pocket2:USER:PASS` | `https://csos.josefkolar.cz/hls/pocket2/` |
+| `drone1` | `rtmp://csos.josefkolar.cz:1935/drone1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:drone1:USER:PASS` | `https://csos.josefkolar.cz/hls/drone1/` |
+| `x/drone1` | `rtmp://csos.josefkolar.cz:1935/x/drone1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/drone1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/drone1/` |
+| `x/mobile1` | `rtmp://csos.josefkolar.cz:1935/x/mobile1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile1/` |
+| `x/mobile2` | `rtmp://csos.josefkolar.cz:1935/x/mobile2?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile2:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile2/` |
+| `x/mobile3` | `rtmp://csos.josefkolar.cz:1935/x/mobile3?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile3:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile3/` |
+| `x/mobile4` | `rtmp://csos.josefkolar.cz:1935/x/mobile4?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile4:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile4/` |
+| `x/mobile5` | `rtmp://csos.josefkolar.cz:1935/x/mobile5?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile5:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile5/` |
+| `insta1` | `rtmp://csos.josefkolar.cz:1935/insta1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:insta1:USER:PASS` | `https://csos.josefkolar.cz/hls/insta1/` |
+| `x/insta1` | `rtmp://csos.josefkolar.cz:1935/x/insta1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/insta1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/insta1/` |
 
-```
-rtmp://csos.josefkolar.cz:1935/SLOT?user=USER&pass=PASS
-```
-
-### Consumption (server → switcher)
-
-```
-srt://csos.josefkolar.cz:8890?streamid=read:SLOT:USER:PASS
-```
-
-### HLS playback
-
-```
-https://csos.josefkolar.cz/hls/SLOT/
-```
+`x/` prefixed slots are aliases required by the "IRL smth" Android app.
 
 ## Monitoring and debugging
 
