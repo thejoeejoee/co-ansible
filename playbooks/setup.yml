@@ -17,6 +17,10 @@
       import_role:
         name: ../roles/web_proxy
 
+    - tags: [gfx]
+      import_role:
+        name: ../roles/gfx
+
     # - tags: [ta]
     #   import_role:
     #     name: ../roles/ta
