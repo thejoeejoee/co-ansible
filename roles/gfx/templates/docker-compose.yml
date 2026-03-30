@@ -1,0 +1,22 @@
+services:
+  gfx-proxy:
+    build:
+      context: "{{ gfx__home_dir }}/proxy"
+      dockerfile: proxy.Dockerfile
+    ports:
+      - '127.0.0.1:{{ gfx__proxy_host_port }}:8080'
+    restart: unless-stopped
+
+  gfx-control:
+    build:
+      context: "{{ gfx__home_dir }}/control"
+      dockerfile: Dockerfile
+    ports:
+      - '127.0.0.1:{{ gfx__control_host_port }}:5000'
+    volumes:
+      - "{{ gfx__home_dir }}/config/config.json:/app/config.json"
+      - "{{ gfx__home_dir }}/config/settings.json:/app/settings.json"
+      - "{{ gfx__home_dir }}/data/:/app/data/"
+    restart: unless-stopped
+    depends_on:
+      - gfx-proxy
