@@ -24,20 +24,10 @@ metrics: yes
 metricsAddress: localhost:9998
 
 pathDefaults:
-  # TODO: nope, does not work like that,
-  # see https://github.com/bluenviron/mediamtx/issues/2214
-  # fallback: /_fallback
+  alwaysAvailable: true
+  alwaysAvailableFile: /etc/mediamtx/co-stream-proxy-no-signal.mp4
 
 paths:
-# TODO: see above, currently not working with mediamtx
-#  _fallback:
-#    runOnInit: >
-#      ffmpeg -re -loop 1 -framerate 25
-#      -i /etc/mediamtx/co-stream-proxy-no-signal.png
-#      -c:v libx264 -profile:v baseline -tune zerolatency -preset ultrafast
-#      -pix_fmt yuv420p -vf scale=1920:1080
-#      -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
-#    runOnInitRestart: yes
 
   macos-stream: {}
   # dji pockets

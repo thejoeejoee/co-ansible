@@ -1,7 +1,7 @@
 - name: Download mediamtx
   become: true
   unarchive:
-    src: https://github.com/bluenviron/mediamtx/releases/download/v1.13.1/mediamtx_v1.13.1_linux_amd64.tar.gz
+    src: https://github.com/bluenviron/mediamtx/releases/download/v1.17.0/mediamtx_v1.17.0_linux_amd64.tar.gz
     dest: /tmp
     remote_src: yes
 
@@ -54,11 +54,11 @@
     dest: /etc/mediamtx/mediamtx.yml
     mode: '0644'
 
-- name: Prepare fallback image
+- name: Prepare offline segment video
   become: true
   copy:
-    src: ../resources/co-stream-proxy-no-signal.png
-    dest: /etc/mediamtx/co-stream-proxy-no-signal.png
+    src: ../resources/co-stream-proxy-no-signal.mp4
+    dest: /etc/mediamtx/co-stream-proxy-no-signal.mp4
     mode: '0644'
 
 - name: Mediamtx systemd service is prepared
