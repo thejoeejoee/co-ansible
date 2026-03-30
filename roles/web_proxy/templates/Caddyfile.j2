@@ -73,7 +73,7 @@ gfx.{{ web_proxy__domain }} {
         {{ gfx__auth_user }} {{ gfx__auth_hash }}
     }
 
-    handle {
+    handle_path /control/* {
         reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 }
