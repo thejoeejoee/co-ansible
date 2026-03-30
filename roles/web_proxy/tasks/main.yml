@@ -19,6 +19,17 @@
       vars:
         caddy_conf_filename: Caddyfile
         caddy_config: "{{ lookup('template', 'templates/Caddyfile.j2') }}"
+        caddy_config_update: false
 
         caddy_systemd_restart_startlimitinterval: 60
   become: true
+
+- name: Deploy Caddyfile
+  become: true
+  ansible.builtin.copy:
+    content: "{{ lookup('template', 'templates/Caddyfile.j2') }}"
+    dest: /etc/caddy/Caddyfile
+    owner: www-data
+    mode: "0640"
+    validate: "caddy validate --config %s --adapter caddyfile"
+  notify: Restart caddy
