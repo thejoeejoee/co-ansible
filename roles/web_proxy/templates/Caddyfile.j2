@@ -28,7 +28,9 @@ http://localhost:2019 {
     }
 
     basic_auth @telemetry {
-        {{ web_proxy__basic_auth_user }} {{ web_proxy__basic_auth_pass_hash }}
+{% for cred in credentials.telemetry %}
+        {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
+{% endfor %}
     }
 
     # handle, do not strip /prometheus
@@ -69,6 +71,9 @@ http://localhost:2019 {
                 <li><a href="https://gfx.{{ web_proxy__domain }}/">GFX Control</a> <small>— graphics control panel</small></li>
                 <li><a href="{{ gfx__github_pages_url }}">GFX Overlay</a> <small>— stream overlay (GitHub Pages)</small></li>
             </ul>
+            <h2 style="font-size:1rem;margin-top:2rem;">OBS Browser Source</h2>
+            <input readonly value="{{ gfx__github_pages_url }}?sse=https://gfx.{{ web_proxy__domain }}/_sse/" onclick="this.select()" style="width:100%;padding:.4rem;font:inherit;font-size:.85rem;border:1px solid #ccc;border-radius:4px;color:#333;background:#f8f8f8;cursor:text;"
+            >
         </body>
         </html>
         HTML
@@ -98,9 +103,15 @@ gfx.{{ web_proxy__domain }} {
         reverse_proxy localhost:{{ gfx__proxy_host_port }}
     }
 
+    handle /control/* {
+        reverse_proxy localhost:{{ gfx__proxy_host_port }}
+    }
+
     handle {
         basic_auth {
-            {{ gfx__auth_user }} {{ gfx__auth_hash }}
+{% for cred in credentials.gfx %}
+            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
+{% endfor %}
         }
         reverse_proxy localhost:{{ gfx__control_host_port }}
     }
