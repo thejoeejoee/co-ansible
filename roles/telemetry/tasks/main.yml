@@ -35,9 +35,9 @@
           server:
             http_addr: 127.0.0.1
             http_port: 3000
-            root_url: "https://csos.josefkolar.cz/grafana/"
+            root_url: "https://{{ web_proxy__domain }}/grafana/"
           security:
-            admin_user: admin
+            admin_user: "{{ telemetry__grafana_admin_user }}"
             admin_password: "{{ telemetry__grafana_admin_pass }}"
 
         grafana_ldap:

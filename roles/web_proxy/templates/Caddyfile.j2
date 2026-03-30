@@ -8,7 +8,10 @@ http://localhost:2019 {
     metrics
 }
 
-csos.josefkolar.cz {
+{{ web_proxy__domain }} {
+{% if web_proxy__disable_tls | default(false) %}
+    tls internal
+{% endif %}
     @telemetry path /prometheus/* /grafana/*
 
     handle_path /hls/* {
@@ -25,8 +28,7 @@ csos.josefkolar.cz {
     }
 
     basic_auth @telemetry {
-        # TODO: move
-        admin $2a$14$rP.sNPFpuEd.zsqxIcz6nuJ77XOE51B4cZlAsg8OVRjn0jJ4mLHeS
+        {{ web_proxy__basic_auth_user }} {{ web_proxy__basic_auth_pass_hash }}
     }
 
     # handle, do not strip /prometheus
@@ -43,10 +45,16 @@ csos.josefkolar.cz {
 }
 
 # allow cloud connection with hardcoded http:// in TallyArbiter
-cloud.ta.csos.josefkolar.cz:80, socket.tally.csos.josefkolar.cz:80 {
+cloud.ta.{{ web_proxy__domain }}:80, socket.tally.{{ web_proxy__domain }}:80 {
+{% if web_proxy__disable_tls | default(false) %}
+    tls internal
+{% endif %}
     reverse_proxy localhost:4455
 }
 
-ta.csos.josefkolar.cz, tally.csos.josefkolar.cz {
+ta.{{ web_proxy__domain }}, tally.{{ web_proxy__domain }} {
+{% if web_proxy__disable_tls | default(false) %}
+    tls internal
+{% endif %}
     reverse_proxy localhost:4455
 }
