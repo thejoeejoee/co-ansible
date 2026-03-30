@@ -41,7 +41,38 @@ http://localhost:2019 {
         reverse_proxy localhost:3000
     }
 
-    respond "ČO is healthy!"
+    handle {
+        header Content-Type "text/html; charset=utf-8"
+        respond <<HTML
+        <!doctype html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>{{ web_proxy__domain }}</title>
+            <style>
+                body { font-family: system-ui, sans-serif; max-width: 480px; margin: 4rem auto; padding: 0 1rem; color: #1a1a1a; }
+                h1 { font-size: 1.4rem; margin-bottom: 2rem; }
+                ul { list-style: none; padding: 0; }
+                li { margin: .5rem 0; }
+                a { color: #0055d4; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+                small { color: #666; }
+            </style>
+        </head>
+        <body>
+            <h1>{{ web_proxy__domain }}</h1>
+            <ul>
+                <li><a href="/grafana/">Grafana</a> <small>— monitoring dashboards</small></li>
+                <li><a href="/prometheus/">Prometheus</a> <small>— metrics</small></li>
+                <li><a href="/hls/">HLS player</a> <small>— stream playback</small></li>
+                <li><a href="https://gfx.{{ web_proxy__domain }}/">GFX Control</a> <small>— graphics control panel</small></li>
+                <li><a href="{{ gfx__github_pages_url }}">GFX Overlay</a> <small>— stream overlay (GitHub Pages)</small></li>
+            </ul>
+        </body>
+        </html>
+        HTML
+    }
 }
 
 # allow cloud connection with hardcoded http:// in TallyArbiter
@@ -67,13 +98,10 @@ gfx.{{ web_proxy__domain }} {
         reverse_proxy localhost:{{ gfx__proxy_host_port }}
     }
 
-    redir / {{ gfx__github_pages_url }}{uri} permanent
-
-    basic_auth {
-        {{ gfx__auth_user }} {{ gfx__auth_hash }}
-    }
-
-    handle_path /control/* {
+    handle {
+        basic_auth {
+            {{ gfx__auth_user }} {{ gfx__auth_hash }}
+        }
         reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 }
