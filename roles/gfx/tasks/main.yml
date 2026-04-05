@@ -1,0 +1,58 @@
+- name: Prepare {{ gfx__home_dir }}/ directory
+  ansible.builtin.file:
+    path: "{{ gfx__home_dir }}/"
+    state: directory
+
+- name: Prepare {{ gfx__home_dir }}/config directory
+  ansible.builtin.file:
+    path: "{{ gfx__home_dir }}/config"
+    state: directory
+
+- name: Prepare {{ gfx__home_dir }}/data directory
+  ansible.builtin.file:
+    path: "{{ gfx__home_dir }}/data"
+    state: directory
+
+- name: synchronize Flask control source to {{ gfx__home_dir }}/control/
+  synchronize:
+    src: "{{ gfx__control_source_dir }}/"
+    dest: "{{ gfx__home_dir }}/control/"
+    mode: push
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=config.json"
+      - "--exclude=settings.json"
+      - "--exclude=instance/"
+      - "--exclude=export/"
+  delegate_to: localhost
+
+- name: synchronize Go proxy source to {{ gfx__home_dir }}/proxy/
+  synchronize:
+    src: "{{ gfx__proxy_source_dir }}/"
+    dest: "{{ gfx__home_dir }}/proxy/"
+    mode: push
+    rsync_opts:
+      - "--exclude=.git"
+  delegate_to: localhost
+
+- name: Render config.json to {{ gfx__home_dir }}/config/config.json
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ gfx__home_dir }}/config/config.json"
+
+- name: Render settings.json to {{ gfx__home_dir }}/config/settings.json
+  ansible.builtin.template:
+    src: settings.json.j2
+    dest: "{{ gfx__home_dir }}/config/settings.json"
+
+- name: Render docker-compose.yml to {{ gfx__home_dir }}/docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml
+    dest: "{{ gfx__home_dir }}/docker-compose.yml"
+
+- name: Create and start gfx services
+  community.docker.docker_compose_v2:
+    project_src: "{{ gfx__home_dir }}/"
+    files:
+      - docker-compose.yml
+    build: always

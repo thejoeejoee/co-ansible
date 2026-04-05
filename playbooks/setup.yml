@@ -1,9 +1,6 @@
 - name: Setup CSOS stream proxy
   hosts: csos
   strategy: free
-  vars:
-    # csos_stream_proxy__read_pass
-    # csos_stream_proxy__write_pass
   tasks:
     - tags: [base]
       import_role:
@@ -16,6 +13,10 @@
     - tags: [web_proxy]
       import_role:
         name: ../roles/web_proxy
+
+    - tags: [gfx]
+      import_role:
+        name: ../roles/gfx
 
     # - tags: [ta]
     #   import_role:

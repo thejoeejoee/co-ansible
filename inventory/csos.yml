@@ -4,3 +4,4 @@ csos:
 
   vars:
     ansible_user: root
+    web_proxy__domain: csos.josefkolar.cz
