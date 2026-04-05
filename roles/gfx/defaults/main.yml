@@ -6,6 +6,3 @@ gfx__proxy_source_dir: "{{ playbook_dir }}/../../co-stream-gfx"
 gfx__db_name: event.db
 gfx__event_id: 1
 gfx__github_pages_url: "https://thejoeejoee.github.io/co-stream-gfx/"
-# Empty defaults for auth credentials — actual values come from inventory/csos.yml as inline !vault entries
-gfx__auth_user:
-gfx__auth_hash:

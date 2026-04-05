@@ -49,29 +49,21 @@ paths:
   x/insta1: {}
 
 authInternalUsers:
-- user: pocket
-  pass: "{{ csos_stream_proxy__write_pass }}"
+{% for cred in credentials.stream_write %}
+- user: "{{ cred.user }}"
+  pass: "{{ cred.pass }}"
   permissions:
   - action: publish
   - action: read
 
-- user: drone
-  pass: "{{ csos_stream_proxy__write_pass }}"
-  permissions:
-  - action: publish
-  - action: read
-
-- user: mobile
-  pass: "{{ csos_stream_proxy__write_pass }}"
-  permissions:
-  - action: publish
-  - action: read
-
-- user: vmix
-  pass: "{{ csos_stream_proxy__read_pass }}"
+{% endfor %}
+{% for cred in credentials.stream_read %}
+- user: "{{ cred.user }}"
+  pass: "{{ cred.pass }}"
   permissions:
   - action: read
 
+{% endfor %}
 - user: any
   pass:
   ips: ['127.0.0.1', '::1']
