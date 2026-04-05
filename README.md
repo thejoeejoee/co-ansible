@@ -1,105 +1,88 @@
 # ČSOS Proxy Ansible
 
-Ansible playbook to deploy ČSOS livestreaming purposes server.
+Ansible project deploying a ČSOS livestreaming relay server on Ubuntu 24.04. Components: [mediamtx](https://github.com/bluenviron/mediamtx) (RTMP/SRT ingest, HLS output), [Caddy](https://caddyserver.com/) (reverse proxy, TLS), Prometheus + Grafana + Node Exporter (telemetry), Tally Arbiter (tally lights, currently disabled).
 
-## Stream proxy
+## Connecting streams
 
-Uses mediamtx under the hood.
+Each stream has a **slot** — a unique identifier (mediamtx calls it a `path`). RTMP for ingest (write), SRT for consumption (read).
 
-Slot == unique identifier for single stream (in terminology of mediamtx it's called `path`)
+| Slot | Write (RTMP) | Read (SRT) | HLS |
+|------|-------------|------------|-----|
+| `macos-stream` | `rtmp://csos.josefkolar.cz:1935/macos-stream?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:macos-stream:USER:PASS` | `https://csos.josefkolar.cz/hls/macos-stream/` |
+| `pocket1` | `rtmp://csos.josefkolar.cz:1935/pocket1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:pocket1:USER:PASS` | `https://csos.josefkolar.cz/hls/pocket1/` |
+| `pocket2` | `rtmp://csos.josefkolar.cz:1935/pocket2?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:pocket2:USER:PASS` | `https://csos.josefkolar.cz/hls/pocket2/` |
+| `drone1` | `rtmp://csos.josefkolar.cz:1935/drone1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:drone1:USER:PASS` | `https://csos.josefkolar.cz/hls/drone1/` |
+| `x/drone1` | `rtmp://csos.josefkolar.cz:1935/x/drone1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/drone1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/drone1/` |
+| `x/mobile1` | `rtmp://csos.josefkolar.cz:1935/x/mobile1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile1/` |
+| `x/mobile2` | `rtmp://csos.josefkolar.cz:1935/x/mobile2?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile2:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile2/` |
+| `x/mobile3` | `rtmp://csos.josefkolar.cz:1935/x/mobile3?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile3:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile3/` |
+| `x/mobile4` | `rtmp://csos.josefkolar.cz:1935/x/mobile4?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile4:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile4/` |
+| `x/mobile5` | `rtmp://csos.josefkolar.cz:1935/x/mobile5?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile5:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile5/` |
+| `insta1` | `rtmp://csos.josefkolar.cz:1935/insta1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:insta1:USER:PASS` | `https://csos.josefkolar.cz/hls/insta1/` |
+| `x/insta1` | `rtmp://csos.josefkolar.cz:1935/x/insta1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/insta1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/insta1/` |
 
-Slots are configured in `playbooks/templates/mediamtx.yml` and are used as follows:
+`x/` prefixed slots are aliases required by the "IRL smth" Android app.
 
-### Upstreams
+## Monitoring and debugging
 
-from capture devices to the proxy server:
+### Stream debugging
 
-```
-rtmp://csos.josefkolar.cz:1935/SLOT?user=USER&pass=PASS
-```
-
-### Downstreams
-
-from the proxy server to the switcher/consumer:
-
-```
-srt://csos.josefkolar.cz:8890?streamid=read:SLOT:USER:PASS
-```
-
-### Debugging
-
+Preview a stream via RTMP:
 ```shell
 ffplay "rtmp://csos.josefkolar.cz:1935/SLOT?user=USER&pass=PASS"
 ```
+
+Raw HLS endpoint (no auth):
 ```
 http://csos.josefkolar.cz:8888/SLOT/
 ```
 
-## Deployment
+### Telemetry
 
-Tested on Ubuntu 24.04, deployed by Ansible -- see `playbooks/setup.yml` and `playbooks/templates/` for details.
+Grafana and Prometheus are behind basic auth at:
+
+```
+https://csos.josefkolar.cz/grafana/
+https://csos.josefkolar.cz/prometheus/
+```
+
+## Administration
+
+### Prerequisites
 
 ```shell
-ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
-  -e @secrets.enc --vault-password-file .pass.env
+ansible-galaxy install -r requirements.yml
+```
+
+### Deploy
+
+```shell
+# Production
+ansible-playbook -i inventory/csos.yml playbooks/setup.yml --vault-password-file pass.env
+
+# Local dev (OrbStack)
+ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --vault-password-file pass.env
 ```
 
 ### Secrets
 
-Defaults are stored in secrets.enc, which is encrypted with Ansible Vault.
+Stored as inline `!vault` encrypted values in inventory files (`inventory/csos.yml`, `inventory/orb.yaml`).
 
-Needed secrets:
+Required variables:
 ```
 csos_stream_proxy__write_pass
 csos_stream_proxy__read_pass
+telemetry__grafana_admin_user
+telemetry__grafana_admin_pass
+web_proxy__basic_auth_user
+web_proxy__basic_auth_pass_hash
 ```
 
-### Logs
+### Configuration
 
-Nominal run:
-
-```
-PLAY [Setup CSOS stream proxy]
-
-TASK [Gathering Facts]
-ok: [csos.josefkolar.cz]
-
-TASK [Apt update]
-changed: [csos.josefkolar.cz]
-
-TASK [Download mediamtx]
-ok: [csos.josefkolar.cz]
-
-TASK [Install mediamtx]
-ok: [csos.josefkolar.cz]
-
-TASK [UFW allow RTMP]
-ok: [csos.josefkolar.cz]
-
-TASK [UFW allow HLS]
-ok: [csos.josefkolar.cz]
-
-TASK [UFW allow SRT]
-ok: [csos.josefkolar.cz]
-
-TASK [Prepare mediamtx config directory]
-ok: [csos.josefkolar.cz]
-
-TASK [Prepare config]
-ok: [csos.josefkolar.cz]
-
-TASK [Mediamtx systemd service is prepared]
-ok: [csos.josefkolar.cz]
-
-TASK [Mediamtx systemd service is reloaded]
-ok: [csos.josefkolar.cz]
-
-TASK [Mediamtx systemd service is enabled]
-ok: [csos.josefkolar.cz]
-
-TASK [Mediamtx systemd service is started]
-ok: [csos.josefkolar.cz]
-
-PLAY RECAP
-csos.josefkolar.cz         : ok=13   changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
-```
+| What | Where |
+|------|-------|
+| Stream slots | `roles/stream_proxy/templates/mediamtx.yml` |
+| Reverse proxy routes | `roles/web_proxy/templates/Caddyfile.j2` |
+| Monitoring targets | `roles/telemetry/tasks/main.yml` |
+| Playbook entry point | `playbooks/setup.yml` |

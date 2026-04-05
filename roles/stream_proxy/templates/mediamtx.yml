@@ -24,20 +24,10 @@ metrics: yes
 metricsAddress: localhost:9998
 
 pathDefaults:
-  # TODO: nope, does not work like that,
-  # see https://github.com/bluenviron/mediamtx/issues/2214
-  # fallback: /_fallback
+  alwaysAvailable: true
+  alwaysAvailableFile: /etc/mediamtx/co-stream-proxy-no-signal.mp4
 
 paths:
-# TODO: see above, currently not working with mediamtx
-#  _fallback:
-#    runOnInit: >
-#      ffmpeg -re -loop 1 -framerate 25
-#      -i /etc/mediamtx/co-stream-proxy-no-signal.png
-#      -c:v libx264 -profile:v baseline -tune zerolatency -preset ultrafast
-#      -pix_fmt yuv420p -vf scale=1920:1080
-#      -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
-#    runOnInitRestart: yes
 
   macos-stream: {}
   # dji pockets
@@ -59,29 +49,21 @@ paths:
   x/insta1: {}
 
 authInternalUsers:
-- user: pocket
-  pass: "{{ csos_stream_proxy__write_pass }}"
+{% for cred in credentials.stream_write %}
+- user: "{{ cred.user }}"
+  pass: "{{ cred.pass }}"
   permissions:
   - action: publish
   - action: read
 
-- user: drone
-  pass: "{{ csos_stream_proxy__write_pass }}"
-  permissions:
-  - action: publish
-  - action: read
-
-- user: mobile
-  pass: "{{ csos_stream_proxy__write_pass }}"
-  permissions:
-  - action: publish
-  - action: read
-
-- user: vmix
-  pass: "{{ csos_stream_proxy__read_pass }}"
+{% endfor %}
+{% for cred in credentials.stream_read %}
+- user: "{{ cred.user }}"
+  pass: "{{ cred.pass }}"
   permissions:
   - action: read
 
+{% endfor %}
 - user: any
   pass:
   ips: ['127.0.0.1', '::1']
