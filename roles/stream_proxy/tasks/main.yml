@@ -47,6 +47,18 @@
     path: /etc/mediamtx
     state: directory
 
+- name: Clean snapshot directory
+  become: true
+  file:
+    path: /var/mediamtx/snapshots
+    state: absent
+
+- name: Prepare snapshot directory
+  become: true
+  file:
+    path: /var/mediamtx/snapshots
+    state: directory
+
 - name: Prepare config
   become: true
   template:

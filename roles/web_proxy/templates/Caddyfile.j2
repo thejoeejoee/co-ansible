@@ -26,6 +26,10 @@ http://localhost:2019 {
             header_down Location ^/ /webrtc/
         }
     }
+    handle_path /snapshots/* {
+        root * /var/mediamtx/snapshots
+        file_server
+    }
 
     basic_auth @telemetry {
 {% for cred in credentials.telemetry %}
@@ -105,6 +109,16 @@ gfx.{{ web_proxy__domain }} {
 
     handle /control/* {
         reverse_proxy localhost:{{ gfx__proxy_host_port }}
+    }
+
+    handle /api/director-favorite {
+        @post method POST
+        basic_auth @post {
+{% for cred in credentials.gfx %}
+            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
+{% endfor %}
+        }
+        reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 
     handle {
