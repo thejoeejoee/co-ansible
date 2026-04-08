@@ -4,16 +4,16 @@ Ansible project deploying a ČSOS livestreaming relay server on Ubuntu 24.04. Co
 
 ## Connecting streams
 
-Each stream has a **slot** — a unique identifier (mediamtx calls it a `path`). RTMP for ingest (write), SRT for consumption (read). Every slot has a `x/` prefixed alias required by the "IRL smth" Android app.
+Each stream has a **slot** — a unique identifier (mediamtx calls it a `path`). All slots use the `x/` prefix. RTMP for ingest (write), SRT for consumption (read).
 
 | Slot | Write (RTMP) | Read (SRT) | HLS |
 |------|-------------|------------|-----|
-| `macos-stream` | `rtmp://HOST:1935/macos-stream?user=U&pass=P` | `srt://HOST:8890?streamid=read:macos-stream:U:P` | `https://HOST/hls/macos-stream/` |
-| `pocket1` | `rtmp://HOST:1935/pocket1?user=U&pass=P` | `srt://HOST:8890?streamid=read:pocket1:U:P` | `https://HOST/hls/pocket1/` |
-| `pocket2` | `rtmp://HOST:1935/pocket2?user=U&pass=P` | `srt://HOST:8890?streamid=read:pocket2:U:P` | `https://HOST/hls/pocket2/` |
-| `drone1` | `rtmp://HOST:1935/drone1?user=U&pass=P` | `srt://HOST:8890?streamid=read:drone1:U:P` | `https://HOST/hls/drone1/` |
+| `x/macos-stream` | `rtmp://HOST:1935/x/macos-stream?user=U&pass=P` | `srt://HOST:8890?streamid=read:x/macos-stream:U:P` | `https://HOST/hls/x/macos-stream/` |
+| `x/pocket1` | `rtmp://HOST:1935/x/pocket1?user=U&pass=P` | `srt://HOST:8890?streamid=read:x/pocket1:U:P` | `https://HOST/hls/x/pocket1/` |
+| `x/pocket2` | `rtmp://HOST:1935/x/pocket2?user=U&pass=P` | `srt://HOST:8890?streamid=read:x/pocket2:U:P` | `https://HOST/hls/x/pocket2/` |
+| `x/drone1` | `rtmp://HOST:1935/x/drone1?user=U&pass=P` | `srt://HOST:8890?streamid=read:x/drone1:U:P` | `https://HOST/hls/x/drone1/` |
 | `x/mobile1`–`x/mobile5` | `rtmp://HOST:1935/x/mobileN?user=U&pass=P` | `srt://HOST:8890?streamid=read:x/mobileN:U:P` | `https://HOST/hls/x/mobileN/` |
-| `insta1` | `rtmp://HOST:1935/insta1?user=U&pass=P` | `srt://HOST:8890?streamid=read:insta1:U:P` | `https://HOST/hls/insta1/` |
+| `x/insta1` | `rtmp://HOST:1935/x/insta1?user=U&pass=P` | `srt://HOST:8890?streamid=read:x/insta1:U:P` | `https://HOST/hls/x/insta1/` |
 
 `HOST` = `csos.josefkolar.cz` (prod) or `csos.orb.local` (local dev).
 
