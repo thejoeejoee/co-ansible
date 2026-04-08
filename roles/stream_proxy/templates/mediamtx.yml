@@ -24,15 +24,27 @@ metrics: yes
 metricsAddress: localhost:9998
 
 pathDefaults:
-  alwaysAvailable: true
-  alwaysAvailableFile: /etc/mediamtx/co-stream-proxy-no-signal.mp4
+  # alwaysAvailable: true
+  # alwaysAvailableFile: /etc/mediamtx/co-stream-proxy-no-signal.mp4
+  runOnReady: >
+    bash -c '
+    while true; do
+      mkdir -p $(dirname /var/mediamtx/snapshots/$MTX_PATH.jpg)
+      ffmpeg -y -i http://localhost:8888/$MTX_PATH/index.m3u8 -frames:v 1 -update true /var/mediamtx/snapshots/$MTX_PATH.jpg 2>/dev/null
+      sleep 5
+    done'
+  runOnReadyRestart: yes
 
 paths:
 
   macos-stream: {}
+  x/macos-stream: {}
+
   # dji pockets
   pocket1: {}
+  x/pocket1: {}
   pocket2: {}
+  x/pocket2: {}
 
   # dji rc pro
   drone1: {}
