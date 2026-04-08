@@ -1,49 +1,49 @@
 # ČSOS Proxy Ansible
 
-Ansible project deploying a ČSOS livestreaming relay server on Ubuntu 24.04. Components: [mediamtx](https://github.com/bluenviron/mediamtx) (RTMP/SRT ingest, HLS output), [Caddy](https://caddyserver.com/) (reverse proxy, TLS), Prometheus + Grafana + Node Exporter (telemetry), Tally Arbiter (tally lights, currently disabled).
+Ansible project deploying a ČSOS livestreaming relay server on Ubuntu 24.04. Components: [mediamtx](https://github.com/bluenviron/mediamtx) (RTMP/SRT ingest, HLS/WebRTC output), [Caddy](https://caddyserver.com/) (reverse proxy, TLS), Prometheus + Grafana + Node Exporter (telemetry).
 
 ## Connecting streams
 
-Each stream has a **slot** — a unique identifier (mediamtx calls it a `path`). RTMP for ingest (write), SRT for consumption (read).
+Each stream has a **slot** — a unique identifier (mediamtx calls it a `path`). RTMP for ingest (write), SRT for consumption (read). Every slot has a `x/` prefixed alias required by the "IRL smth" Android app.
 
 | Slot | Write (RTMP) | Read (SRT) | HLS |
 |------|-------------|------------|-----|
-| `macos-stream` | `rtmp://csos.josefkolar.cz:1935/macos-stream?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:macos-stream:USER:PASS` | `https://csos.josefkolar.cz/hls/macos-stream/` |
-| `pocket1` | `rtmp://csos.josefkolar.cz:1935/pocket1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:pocket1:USER:PASS` | `https://csos.josefkolar.cz/hls/pocket1/` |
-| `pocket2` | `rtmp://csos.josefkolar.cz:1935/pocket2?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:pocket2:USER:PASS` | `https://csos.josefkolar.cz/hls/pocket2/` |
-| `drone1` | `rtmp://csos.josefkolar.cz:1935/drone1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:drone1:USER:PASS` | `https://csos.josefkolar.cz/hls/drone1/` |
-| `x/drone1` | `rtmp://csos.josefkolar.cz:1935/x/drone1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/drone1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/drone1/` |
-| `x/mobile1` | `rtmp://csos.josefkolar.cz:1935/x/mobile1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile1/` |
-| `x/mobile2` | `rtmp://csos.josefkolar.cz:1935/x/mobile2?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile2:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile2/` |
-| `x/mobile3` | `rtmp://csos.josefkolar.cz:1935/x/mobile3?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile3:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile3/` |
-| `x/mobile4` | `rtmp://csos.josefkolar.cz:1935/x/mobile4?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile4:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile4/` |
-| `x/mobile5` | `rtmp://csos.josefkolar.cz:1935/x/mobile5?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/mobile5:USER:PASS` | `https://csos.josefkolar.cz/hls/x/mobile5/` |
-| `insta1` | `rtmp://csos.josefkolar.cz:1935/insta1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:insta1:USER:PASS` | `https://csos.josefkolar.cz/hls/insta1/` |
-| `x/insta1` | `rtmp://csos.josefkolar.cz:1935/x/insta1?user=USER&pass=PASS` | `srt://csos.josefkolar.cz:8890?streamid=read:x/insta1:USER:PASS` | `https://csos.josefkolar.cz/hls/x/insta1/` |
+| `macos-stream` | `rtmp://HOST:1935/macos-stream?user=U&pass=P` | `srt://HOST:8890?streamid=read:macos-stream:U:P` | `https://HOST/hls/macos-stream/` |
+| `pocket1` | `rtmp://HOST:1935/pocket1?user=U&pass=P` | `srt://HOST:8890?streamid=read:pocket1:U:P` | `https://HOST/hls/pocket1/` |
+| `pocket2` | `rtmp://HOST:1935/pocket2?user=U&pass=P` | `srt://HOST:8890?streamid=read:pocket2:U:P` | `https://HOST/hls/pocket2/` |
+| `drone1` | `rtmp://HOST:1935/drone1?user=U&pass=P` | `srt://HOST:8890?streamid=read:drone1:U:P` | `https://HOST/hls/drone1/` |
+| `x/mobile1`–`x/mobile5` | `rtmp://HOST:1935/x/mobileN?user=U&pass=P` | `srt://HOST:8890?streamid=read:x/mobileN:U:P` | `https://HOST/hls/x/mobileN/` |
+| `insta1` | `rtmp://HOST:1935/insta1?user=U&pass=P` | `srt://HOST:8890?streamid=read:insta1:U:P` | `https://HOST/hls/insta1/` |
 
-`x/` prefixed slots are aliases required by the "IRL smth" Android app.
+`HOST` = `csos.josefkolar.cz` (prod) or `csos.orb.local` (local dev).
 
-## Monitoring and debugging
+## Monitoring
+
+### Grafana
+
+Anonymous read-only access (no login required):
+
+```
+https://csos.josefkolar.cz/grafana/
+```
+
+The mediamtx dashboard shows per-slot thumbnail previews (auto-refreshed via FFmpeg snapshots), bandwidth, protocol connections, and error frames.
 
 ### Stream debugging
 
-Preview a stream via RTMP:
+Preview via RTMP:
 ```shell
 ffplay "rtmp://csos.josefkolar.cz:1935/SLOT?user=USER&pass=PASS"
 ```
 
-Raw HLS endpoint (no auth):
+HLS preview (no auth):
 ```
-http://csos.josefkolar.cz:8888/SLOT/
+https://csos.josefkolar.cz/hls/SLOT/
 ```
 
-### Telemetry
-
-Grafana and Prometheus are behind basic auth at:
-
+Thumbnail snapshots (no auth, refreshed every 5s while stream is active):
 ```
-https://csos.josefkolar.cz/grafana/
-https://csos.josefkolar.cz/prometheus/
+https://csos.josefkolar.cz/snapshots/SLOT.jpg
 ```
 
 ## Administration
@@ -58,25 +58,21 @@ ansible-galaxy install -r requirements.yml
 
 ```shell
 # Production
-ansible-playbook -i inventory/csos.yml playbooks/setup.yml --vault-password-file pass.env
+ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
+  -e @csos.enc --vault-password-file pass.env
 
 # Local dev (OrbStack)
-ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --vault-password-file pass.env
+ansible-playbook -i inventory/orb.yaml playbooks/setup.yml
+
+# Single role
+ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --tags web_proxy
 ```
 
 ### Secrets
 
-Stored as inline `!vault` encrypted values in inventory files (`inventory/csos.yml`, `inventory/orb.yaml`).
+Production secrets live in `csos.enc` (Ansible Vault). Local dev uses plaintext dummy values in `inventory/orb.yaml`.
 
-Required variables:
-```
-csos_stream_proxy__write_pass
-csos_stream_proxy__read_pass
-telemetry__grafana_admin_user
-telemetry__grafana_admin_pass
-web_proxy__basic_auth_user
-web_proxy__basic_auth_pass_hash
-```
+Secrets are structured as a `credentials` dict with keys: `stream_write`, `stream_read`, `telemetry`, `gfx`.
 
 ### Configuration
 
@@ -85,4 +81,5 @@ web_proxy__basic_auth_pass_hash
 | Stream slots | `roles/stream_proxy/templates/mediamtx.yml` |
 | Reverse proxy routes | `roles/web_proxy/templates/Caddyfile.j2` |
 | Monitoring targets | `roles/telemetry/tasks/main.yml` |
+| Grafana dashboards | `roles/telemetry/files/mediamtx-dashboard.json` |
 | Playbook entry point | `playbooks/setup.yml` |
