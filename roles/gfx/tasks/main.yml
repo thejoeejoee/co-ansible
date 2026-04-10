@@ -40,10 +40,10 @@
     src: config.json.j2
     dest: "{{ gfx__home_dir }}/config/config.json"
 
-- name: Render settings.json to {{ gfx__home_dir }}/config/settings.json
-  ansible.builtin.template:
-    src: settings.json.j2
-    dest: "{{ gfx__home_dir }}/config/settings.json"
+#- name: Render settings.json to {{ gfx__home_dir }}/config/settings.json
+#  ansible.builtin.template:
+#    src: settings.json.j2
+#    dest: "{{ gfx__home_dir }}/config/settings.json"
 
 - name: Render docker-compose.yml to {{ gfx__home_dir }}/docker-compose.yml
   ansible.builtin.template:
