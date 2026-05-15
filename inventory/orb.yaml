@@ -7,15 +7,19 @@ csos:
 
     credentials:
       stream_write:
-        - {user: pocket, pass: changeme}
-        - {user: drone, pass: changeme}
-        - {user: mobile, pass: changeme}
+        - { user: drone, pass: changeme }
+        - { user: demo, pass: omed }
       stream_read:
-        - {user: vmix, pass: changeme}
+        - { user: vmix, pass: changeme }
       telemetry:
-        - {user: admin, pass: changeme}
+        - { user: admin, pass: changeme }
       gfx:
-        - {user: admin, pass: changeme}
+        - { user: admin, pass: changeme }
+      restream:
+        youtube_key: "e9ub-fp5m-8c2w-sjtc-4ryy"
+        facebook_key: "FB-27254323410820508-0-Ab4zQQGGKGFOSTsn69eR66Kt"
+        write:
+          - { user: restream, pass: changeme }
 
     web_proxy__domain: csos.orb.local
     web_proxy__disable_tls: true
