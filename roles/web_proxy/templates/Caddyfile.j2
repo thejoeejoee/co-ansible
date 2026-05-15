@@ -107,10 +107,6 @@ gfx.{{ web_proxy__domain }} {
         reverse_proxy localhost:{{ gfx__proxy_host_port }}
     }
 
-    handle /control/* {
-        reverse_proxy localhost:{{ gfx__proxy_host_port }}
-    }
-
     handle /api/director-favorite {
         @post method POST
         basic_auth @post {

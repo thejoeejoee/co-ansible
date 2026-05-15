@@ -37,28 +37,33 @@ pathDefaults:
 
 paths:
 
-  macos-stream: {}
-  x/macos-stream: {}
+  macos: {}
+  x/macos: {}
 
-  # dji pockets
-  pocket1: {}
-  x/pocket1: {}
-  pocket2: {}
-  x/pocket2: {}
+  slot1: {}
+  x/slot1: {}
+  slot2: {}
+  x/slot2: {}
+  slot3: {}
+  x/slot3: {}
+  slot4: {}
+  x/slot4: {}
+  slot5: {}
+  x/slot5: {}
+  slot6: {}
+  x/slot6: {}
+  slot7: {}
+  x/slot7: {}
+  slot8: {}
+  x/slot8: {}
 
-  # dji rc pro
-  drone1: {}
-  x/drone1: {}
+  demo: {}
+  x/demo: {}
 
-  # "IRL smth" Android app requires "x/" prefix to work
-  x/mobile1: {}
-  x/mobile2: {}
-  x/mobile3: {}
-  x/mobile4: {}
-  x/mobile5: {}
-
-  insta1: {}
-  x/insta1: {}
+  # restreaming to YouTube/Facebook (keys loaded from /etc/mediamtx/restream.env)
+  restream:
+    runOnReady: /etc/mediamtx/restream.sh
+    runOnReadyRestart: yes
 
 authInternalUsers:
 {% for cred in credentials.stream_write %}
@@ -74,6 +79,16 @@ authInternalUsers:
   pass: "{{ cred.pass }}"
   permissions:
   - action: read
+
+{% endfor %}
+{% for cred in credentials.restream.write %}
+- user: "{{ cred.user }}"
+  pass: "{{ cred.pass }}"
+  permissions:
+  - action: publish
+    path: restream
+  - action: read
+    path: restream
 
 {% endfor %}
 - user: any
