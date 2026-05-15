@@ -16,8 +16,8 @@ csos:
       gfx:
         - { user: admin, pass: changeme }
       restream:
-        youtube_key: "e9ub-fp5m-8c2w-sjtc-4ryy"
-        facebook_key: "FB-27254323410820508-0-Ab4zQQGGKGFOSTsn69eR66Kt"
+        youtube_key: ""
+        facebook_key: ""
         write:
           - { user: restream, pass: changeme }
 
