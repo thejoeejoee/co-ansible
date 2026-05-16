@@ -65,8 +65,16 @@ ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
 ansible-playbook -i inventory/orb.yaml playbooks/setup.yml
 
 # Single role
-ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --tags web_proxy
+ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --tags stream_proxy
 ```
+
+| Tag | What it deploys |
+|-----|-----------------|
+| `base` | apt upgrade, ffmpeg, Docker |
+| `stream_proxy` | mediamtx binary + config, restream script + env, systemd unit, UFW rules |
+| `web_proxy` | Caddy + Caddyfile, UFW rules (80/443) |
+| `gfx` | GFX overlay Docker Compose + config |
+| `telemetry` | Prometheus, Grafana, Node Exporter, custom dashboards |
 
 ### Secrets
 
