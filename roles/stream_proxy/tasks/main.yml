@@ -1,3 +1,6 @@
+- name: Apply kernel/network tuning for streaming
+  ansible.builtin.include_tasks: tuning.yml
+
 - name: Download mediamtx
   become: true
   unarchive:
