@@ -104,7 +104,9 @@ gfx.{{ web_proxy__domain }} {
     tls internal
 {% endif %}
     handle /_sse/* {
-        reverse_proxy localhost:{{ gfx__proxy_host_port }}
+        reverse_proxy localhost:{{ gfx__proxy_host_port }} {
+            flush_interval -1
+        }
     }
 
     handle /api/director-favorite {
