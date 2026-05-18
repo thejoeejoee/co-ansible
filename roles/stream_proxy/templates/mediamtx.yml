@@ -1,5 +1,8 @@
 logLevel: info
 
+writeQueueSize: 1024
+udpReadBufferSize: 4000000
+
 # upstream feeds
 rtmp: yes
 rtmpAddress: 0.0.0.0:1935
