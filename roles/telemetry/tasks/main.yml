@@ -65,7 +65,7 @@
 - name: Set Grafana admin credentials
   block:
     - name: Reset admin password
-      command: grafana-cli admin reset-admin-password '{{ credentials.telemetry[0].pass }}'
+      command: grafana cli admin reset-admin-password '{{ credentials.telemetry[0].pass }}' --homepath /usr/share/grafana
       changed_when: true
       no_log: true
 

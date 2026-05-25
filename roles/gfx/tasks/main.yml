@@ -39,11 +39,23 @@
   ansible.builtin.template:
     src: config.json.j2
     dest: "{{ gfx__home_dir }}/config/config.json"
+    force: false
 
-#- name: Render settings.json to {{ gfx__home_dir }}/config/settings.json
-#  ansible.builtin.template:
-#    src: settings.json.j2
-#    dest: "{{ gfx__home_dir }}/config/settings.json"
+- name: Read current settings.json
+  ansible.builtin.slurp:
+    src: "{{ gfx__home_dir }}/config/settings.json"
+  register: _gfx_current_settings
+  failed_when: false
+
+- name: Preserve current event_id from server
+  ansible.builtin.set_fact:
+    gfx__event_id: "{{ (_gfx_current_settings.content | b64decode | from_json).event_id }}"
+  when: _gfx_current_settings.content is defined
+
+- name: Render settings.json to {{ gfx__home_dir }}/config/settings.json
+  ansible.builtin.template:
+    src: settings.json.j2
+    dest: "{{ gfx__home_dir }}/config/settings.json"
 
 - name: Render docker-compose.yml to {{ gfx__home_dir }}/docker-compose.yml
   ansible.builtin.template:
