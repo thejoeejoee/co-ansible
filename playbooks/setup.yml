@@ -10,6 +10,10 @@
       import_role:
         name: ../roles/stream_proxy
 
+    - tags: [srtla]
+      import_role:
+        name: ../roles/srtla
+
     - tags: [web_proxy]
       import_role:
         name: ../roles/web_proxy

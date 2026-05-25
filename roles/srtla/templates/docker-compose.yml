@@ -1,0 +1,26 @@
+services:
+  srtla-receiver:
+    image: ghcr.io/openirl/srtla-receiver:latest
+    # no tagged releases — latest is the only available tag
+    ports:
+      - "0.0.0.0:{{ srtla__srtla_port }}:5000/udp"
+      - "0.0.0.0:{{ srtla__sender_port }}:4001/udp"
+      - "127.0.0.1:{{ srtla__player_port }}:4000/udp"
+      - "127.0.0.1:{{ srtla__stats_port }}:8080/tcp"
+    env_file:
+      - .env
+    volumes:
+      - srtla_data:/data
+    restart: unless-stopped
+
+  sls-management-ui:
+    image: ghcr.io/openirl/sls-management-ui:latest
+    # no tagged releases — latest is the only available tag
+    ports:
+      - "127.0.0.1:{{ srtla__mgnt_port }}:3000/tcp"
+    environment:
+      - APP_URL=http://srtla-receiver:8080
+    restart: unless-stopped
+
+volumes:
+  srtla_data:
