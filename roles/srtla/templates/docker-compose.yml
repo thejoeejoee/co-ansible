@@ -10,7 +10,7 @@ services:
     env_file:
       - .env
     volumes:
-      - srtla_data:/data
+      - srtla_data:/var/lib/sls
     restart: unless-stopped
 
   sls-management-ui:
