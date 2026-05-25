@@ -27,6 +27,18 @@
     files:
       - docker-compose.yml
 
+- name: Fix sls data volume ownership (sls user inside container)
+  become: true
+  ansible.builtin.shell: |
+    docker exec srtla-srtla-receiver-1 chown sls:sls /var/lib/sls
+  changed_when: false
+
+- name: Restart srtla-receiver to pick up writable data dir
+  become: true
+  ansible.builtin.shell: |
+    docker restart srtla-srtla-receiver-1
+  changed_when: false
+
 - name: Wait for srtla stats API port to be ready
   become: true
   wait_for:
@@ -35,19 +47,12 @@
     delay: 2
     timeout: 60
 
-- name: Check if API key has already been extracted
-  become: true
-  stat:
-    path: /home/srtla/.apikey
-  register: apikey_file
-
 - name: Extract API key from container logs
   become: true
   ansible.builtin.shell: |
-    docker logs srtla-srtla-receiver-1 2>&1 | grep -oP '(?<=Generated default admin API key: )\S+'
+    docker logs srtla-srtla-receiver-1 2>&1 | grep -oP '(?<=Generated default admin API key: )\S+' | tail -1
   register: extracted_apikey
-  when: not apikey_file.stat.exists
-  changed_when: extracted_apikey.stdout | length > 0
+  changed_when: false
 
 - name: Save API key to /home/srtla/.apikey
   become: true
@@ -55,7 +60,7 @@
     content: "{{ extracted_apikey.stdout }}"
     dest: /home/srtla/.apikey
     mode: '0600'
-  when: not apikey_file.stat.exists and (extracted_apikey.stdout | default('')) | length > 0
+  when: (extracted_apikey.stdout | default('')) | length > 0
 
 - name: Read API key
   become: true
