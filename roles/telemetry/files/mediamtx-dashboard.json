@@ -86,7 +86,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(max by (name) (paths{state=\"ready\",name=~\"x/.*\"})) or vector(0)",
+          "expr": "count(max by (name) (paths{state=\"ready\",name=~\".+\"})) or vector(0)",
           "legendFormat": "",
           "refId": "A"
         }
@@ -149,7 +149,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(sum by (name) (rate(paths_inbound_bytes{name=~\"x/.*\"}[1m])) > 0) or vector(0)",
+          "expr": "count(sum by (name) (rate(paths_inbound_bytes{name=~\".+\"}[1m])) > 0) or vector(0)",
           "legendFormat": "",
           "refId": "A"
         }
@@ -212,7 +212,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(paths_readers{name=~\"x/.*\"}) or vector(0)",
+          "expr": "sum(paths_readers{name=~\".+\"}) or vector(0)",
           "legendFormat": "",
           "refId": "A"
         }
@@ -272,7 +272,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(paths_inbound_bytes{name=~\"x/.*\"}[1m])) * 8 / 1e6",
+          "expr": "sum(rate(paths_inbound_bytes{name=~\".+\"}[1m])) * 8 / 1e6",
           "legendFormat": "",
           "refId": "A"
         }
@@ -332,7 +332,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(paths_outbound_bytes{name=~\"x/.*\"}[1m])) * 8 / 1e6",
+          "expr": "sum(rate(paths_outbound_bytes{name=~\".+\"}[1m])) * 8 / 1e6",
           "legendFormat": "",
           "refId": "A"
         }
@@ -446,7 +446,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/macos-stream/\" target=\"_blank\"><img src=\"/snapshots/x/macos-stream.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/macos-stream/\" target=\"_blank\" style=\"color:inherit\">x/macos-stream</a></div>"
+        "content": "<a href=\"/hls/x/slot1/\" target=\"_blank\"><img src=\"/snapshots/x/slot1.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot1/\" target=\"_blank\" style=\"color:inherit\">x/slot1</a></div>"
       }
     },
     {
@@ -461,7 +461,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/pocket1/\" target=\"_blank\"><img src=\"/snapshots/x/pocket1.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/pocket1/\" target=\"_blank\" style=\"color:inherit\">x/pocket1</a></div>"
+        "content": "<a href=\"/hls/x/slot2/\" target=\"_blank\"><img src=\"/snapshots/x/slot2.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot2/\" target=\"_blank\" style=\"color:inherit\">x/slot2</a></div>"
       }
     },
     {
@@ -476,7 +476,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/pocket2/\" target=\"_blank\"><img src=\"/snapshots/x/pocket2.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/pocket2/\" target=\"_blank\" style=\"color:inherit\">x/pocket2</a></div>"
+        "content": "<a href=\"/hls/x/slot3/\" target=\"_blank\"><img src=\"/snapshots/x/slot3.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot3/\" target=\"_blank\" style=\"color:inherit\">x/slot3</a></div>"
       }
     },
     {
@@ -491,7 +491,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/drone1/\" target=\"_blank\"><img src=\"/snapshots/x/drone1.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/drone1/\" target=\"_blank\" style=\"color:inherit\">x/drone1</a></div>"
+        "content": "<a href=\"/hls/x/slot4/\" target=\"_blank\"><img src=\"/snapshots/x/slot4.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot4/\" target=\"_blank\" style=\"color:inherit\">x/slot4</a></div>"
       }
     },
     {
@@ -506,7 +506,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/mobile1/\" target=\"_blank\"><img src=\"/snapshots/x/mobile1.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/mobile1/\" target=\"_blank\" style=\"color:inherit\">x/mobile1</a></div>"
+        "content": "<a href=\"/hls/x/slot5/\" target=\"_blank\"><img src=\"/snapshots/x/slot5.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot5/\" target=\"_blank\" style=\"color:inherit\">x/slot5</a></div>"
       }
     },
     {
@@ -521,7 +521,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/mobile2/\" target=\"_blank\"><img src=\"/snapshots/x/mobile2.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/mobile2/\" target=\"_blank\" style=\"color:inherit\">x/mobile2</a></div>"
+        "content": "<a href=\"/hls/x/slot6/\" target=\"_blank\"><img src=\"/snapshots/x/slot6.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot6/\" target=\"_blank\" style=\"color:inherit\">x/slot6</a></div>"
       }
     },
     {
@@ -536,7 +536,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/mobile3/\" target=\"_blank\"><img src=\"/snapshots/x/mobile3.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/mobile3/\" target=\"_blank\" style=\"color:inherit\">x/mobile3</a></div>"
+        "content": "<a href=\"/hls/x/slot7/\" target=\"_blank\"><img src=\"/snapshots/x/slot7.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot7/\" target=\"_blank\" style=\"color:inherit\">x/slot7</a></div>"
       }
     },
     {
@@ -551,7 +551,7 @@
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/mobile5/\" target=\"_blank\"><img src=\"/snapshots/x/mobile5.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/mobile5/\" target=\"_blank\" style=\"color:inherit\">x/mobile5</a></div>"
+        "content": "<a href=\"/hls/x/slot8/\" target=\"_blank\"><img src=\"/snapshots/x/slot8.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot8/\" target=\"_blank\" style=\"color:inherit\">x/slot8</a></div>"
       }
     },
     {
@@ -600,7 +600,7 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -630,16 +630,14 @@
       "id": 20,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
+          "calcs": [],
+          "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "desc",
+          "hideZeros": true
         }
       },
       "title": "Ingest Bitrate",
@@ -650,7 +648,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum by (name) (rate(paths_inbound_bytes{name=~\"x/.*\"}[1m])) * 8 / 1e6",
+          "expr": "sum by (name) (rate(paths_inbound_bytes{name=~\".+\"}[1m])) * 8 / 1e6",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
@@ -690,7 +688,7 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -720,16 +718,14 @@
       "id": 21,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
+          "calcs": [],
+          "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "desc",
+          "hideZeros": true
         }
       },
       "title": "Egress Bitrate",
@@ -740,7 +736,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum by (name) (rate(paths_outbound_bytes{name=~\"x/.*\"}[1m])) * 8 / 1e6",
+          "expr": "sum by (name) (rate(paths_outbound_bytes{name=~\".+\"}[1m])) * 8 / 1e6",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
@@ -1318,7 +1314,7 @@
                 "type": "prometheus",
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "sum by (name) (increase(paths_inbound_frames_in_error{name=~\"x/.*\"}[5m]))",
+              "expr": "sum by (name) (increase(paths_inbound_frames_in_error{name=~\".+\"}[5m]))",
               "legendFormat": "{{name}}",
               "refId": "A"
             }
@@ -1412,6 +1408,237 @@
               "refId": "A"
             }
           ]
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 105,
+      "title": "Restream",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": { "text": "Offline", "color": "text" },
+                "1": { "text": "Live", "color": "green" }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "text", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 27
+      },
+      "id": 60,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "title": "Restream Status",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "max(paths{state=\"ready\",name=\"restream\"}) or vector(0)",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "Mbps",
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 4,
+        "y": 27
+      },
+      "id": 61,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": true
+        }
+      },
+      "title": "Restream Ingest Bitrate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(paths_inbound_bytes{name=\"restream\"}[1m])) * 8 / 1e6",
+          "legendFormat": "ingest",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "unit": "Mbps",
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 27
+      },
+      "id": 62,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc",
+          "hideZeros": true
+        }
+      },
+      "title": "Restream Outbound Bitrate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(paths_outbound_bytes{name=\"restream\"}[1m])) * 8 / 1e6",
+          "legendFormat": "outbound (YT+FB)",
+          "refId": "A"
         }
       ]
     }

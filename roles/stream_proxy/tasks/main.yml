@@ -1,3 +1,6 @@
+- name: Apply kernel/network tuning for streaming
+  ansible.builtin.include_tasks: tuning.yml
+
 - name: Download mediamtx
   become: true
   unarchive:
@@ -65,6 +68,20 @@
     src: mediamtx.yml
     dest: /etc/mediamtx/mediamtx.yml
     mode: '0644'
+
+- name: Deploy restream env file
+  become: true
+  template:
+    src: restream.env.j2
+    dest: /etc/mediamtx/restream.env
+    mode: '0600'
+
+- name: Deploy restream script
+  become: true
+  copy:
+    src: ../templates/restream.sh
+    dest: /etc/mediamtx/restream.sh
+    mode: '0755'
 
 - name: Prepare offline segment video
   become: true
