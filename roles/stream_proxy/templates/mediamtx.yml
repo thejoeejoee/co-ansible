@@ -68,6 +68,15 @@ paths:
     runOnReady: /etc/mediamtx/restream.sh
     runOnReadyRestart: yes
 
+{% for slot in srtla__slots %}
+  srtla/{{ slot.name }}:
+    source: srt://127.0.0.1:{{ srtla__player_port }}?streamid=play/{{ slot.name }}
+    sourceOnDemand: yes
+  x/srtla/{{ slot.name }}:
+    source: srtla/{{ slot.name }}
+    sourceOnDemand: yes
+{% endfor %}
+
 authInternalUsers:
 {% for cred in credentials.stream_write %}
 - user: "{{ cred.user }}"
