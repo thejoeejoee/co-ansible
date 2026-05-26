@@ -15,7 +15,7 @@ services:
 
   zitadel-api:
     image: ghcr.io/zitadel/zitadel:latest
-    command: start-from-init --masterkey "{{ auth__zitadel_masterkey }}" --tlsMode external
+    command: start-from-init --masterkey "{{ auth__zitadel_masterkey }}" --tlsMode external --config /zitadel/config.yaml --steps /zitadel/steps.yaml
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: postgres
       ZITADEL_DATABASE_POSTGRES_PORT: 5432
@@ -31,6 +31,8 @@ services:
       ZITADEL_EXTERNALSECURE: "true"
     volumes:
       - "{{ auth__home_dir }}/bootstrap:/zitadel/bootstrap"
+      - "{{ auth__home_dir }}/zitadel-config.yaml:/zitadel/config.yaml:ro"
+      - "{{ auth__home_dir }}/zitadel-init-steps.yaml:/zitadel/steps.yaml:ro"
     ports:
       - "127.0.0.1:{{ auth__zitadel_port }}:8080"
     depends_on:
@@ -39,7 +41,7 @@ services:
 
   zitadel-login:
     image: ghcr.io/zitadel/zitadel:latest
-    command: start-from-init --masterkey "{{ auth__zitadel_masterkey }}" --tlsMode external
+    command: start-from-init --masterkey "{{ auth__zitadel_masterkey }}" --tlsMode external --config /zitadel/config.yaml --steps /zitadel/steps.yaml
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: postgres
       ZITADEL_DATABASE_POSTGRES_PORT: 5432
@@ -55,6 +57,8 @@ services:
       ZITADEL_EXTERNALSECURE: "true"
     volumes:
       - "{{ auth__home_dir }}/bootstrap:/zitadel/bootstrap"
+      - "{{ auth__home_dir }}/zitadel-config.yaml:/zitadel/config.yaml:ro"
+      - "{{ auth__home_dir }}/zitadel-init-steps.yaml:/zitadel/steps.yaml:ro"
     ports:
       - "127.0.0.1:{{ auth__zitadel_login_port }}:8080"
     depends_on:

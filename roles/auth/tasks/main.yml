@@ -13,6 +13,20 @@
     src: docker-compose.yml.j2
     dest: "{{ auth__home_dir }}/docker-compose.yml"
 
+- name: Deploy Zitadel runtime config
+  ansible.builtin.template:
+    src: zitadel-config.yaml.j2
+    dest: "{{ auth__home_dir }}/zitadel-config.yaml"
+    mode: '0600'
+  become: true
+
+- name: Deploy Zitadel init steps
+  ansible.builtin.template:
+    src: zitadel-init-steps.yaml.j2
+    dest: "{{ auth__home_dir }}/zitadel-init-steps.yaml"
+    mode: '0600'
+  become: true
+
 - name: Create and start auth services
   community.docker.docker_compose_v2:
     project_src: "{{ auth__home_dir }}/"
