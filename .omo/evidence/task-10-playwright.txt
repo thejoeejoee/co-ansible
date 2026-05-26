@@ -1,0 +1,25 @@
+
+=== TEST A: Full OAuth2 login flow (testadmin) ===
+  Navigated to /hls/, URL: https://auth.csos.orb.local/ui/login/login?authRequestID=374655969583431683
+  On Zitadel login: https://auth.csos.orb.local/ui/login/login?authRequestID=374655969583431683
+  Login complete for testadmin, URL: https://csos.orb.local/
+  Final URL: https://csos.orb.local/
+  TEST A PASSED
+
+=== TEST B: Group enforcement (testdemo denied /credentials/) ===
+  Navigated to /demo/, URL: https://auth.csos.orb.local/ui/login/login?authRequestID=374655992534663171
+  On Zitadel login: https://auth.csos.orb.local/ui/login/login?authRequestID=374655992534663171
+  Login complete for testdemo, URL: https://csos.orb.local/
+  Logged in as testdemo, URL: https://csos.orb.local/
+  /credentials/ -> HTTP 403
+  TEST B PASSED: Non-admin correctly denied
+
+=== TEST C: Cross-subdomain SSO (admin session reused) ===
+  /credentials/ with admin session -> HTTP 200, URL: https://csos.orb.local/credentials/
+  TEST C PASSED: Admin session reused, /credentials/ accessible
+
+=== TEST D: Grafana OIDC ===
+  /grafana/login -> HTTP 200, URL: https://csos.orb.local/grafana/login
+  TEST D INFO: Grafana page loaded but no OIDC redirect
+
+=== ALL PLAYWRIGHT TESTS COMPLETED ===

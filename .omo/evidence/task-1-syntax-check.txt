@@ -1,0 +1,5 @@
+defaults OK
+handlers OK
+tasks OK
+
+playbook: playbooks/setup.yml

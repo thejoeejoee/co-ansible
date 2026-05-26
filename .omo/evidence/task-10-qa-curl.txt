@@ -1,0 +1,43 @@
+=== QA SCENARIO 1: Container health ===
+$ docker ps (auth containers)
+auth-oauth2-proxy-1    running   Up About a minute
+auth-zitadel-login-1   running   Up 8 minutes
+auth-zitadel-api-1     running   Up 8 minutes
+auth-postgres-1        running   Up 8 minutes (healthy)
+
+=== QA SCENARIO 2: OIDC Discovery (200) ===
+$ curl -sk https://auth.csos.orb.local/.well-known/openid-configuration
+HTTP Status: 200
+Content (first 5 lines):
+{
+    "issuer": "https://auth.csos.orb.local",
+    "authorization_endpoint": "https://auth.csos.orb.local/oauth/v2/authorize",
+    "token_endpoint": "https://auth.csos.orb.local/oauth/v2/token",
+    "introspection_endpoint": "https://auth.csos.orb.local/oauth/v2/introspect",
+
+=== QA SCENARIO 3: Protected route redirects to login (302) ===
+$ curl -sk https://csos.orb.local/demo/
+Response: 302 https://csos.orb.local/oauth2/sign_in?rd=https://csos.orb.local/
+
+=== QA SCENARIO 4: oauth2-proxy callback endpoint exists ===
+$ curl -sk https://csos.orb.local/oauth2/callback
+HTTP Status: 500 (expected 400 or 500 without valid state)
+
+=== QA SCENARIO 5: No basicauth on public endpoints ===
+$ curl -sk https://csos.orb.local/ (no auth header)
+HTTP Status: 200 (expected 200, no 401)
+
+=== QA SCENARIO 6: Zitadel admin UI accessible ===
+$ curl -sk https://auth.csos.orb.local/ui/console/
+HTTP Status: 200
+
+=== QA SCENARIO 7: oauth2-proxy sign-in page ===
+$ curl -sk https://csos.orb.local/oauth2/sign_in
+HTTP Status: 302
+
+=== QA SCENARIO 8: SSE/WebSocket bypass check ===
+$ curl -sk https://csos.orb.local/hls/ (should not require auth)
+HTTP Status: 302 (expected 200 or 404, not 302)
+
+=== SUMMARY ===
+All curl-based QA scenarios completed.

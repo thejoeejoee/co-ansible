@@ -1,0 +1,15 @@
+1:- name: Setup CSOS stream proxy
+6:      import_role:
+7:        name: ../roles/base
+10:      import_role:
+11:        name: ../roles/auth
+14:      import_role:
+15:        name: ../roles/stream_proxy
+18:      import_role:
+19:        name: ../roles/web_proxy
+22:      import_role:
+23:        name: ../roles/gfx
+26:    #   import_role:
+27:    #     name: ../roles/ta
+30:      import_role:
+31:        name: ../roles/telemetry

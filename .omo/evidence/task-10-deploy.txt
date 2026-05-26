@@ -1,0 +1,259 @@
+
+PLAY [Setup CSOS stream proxy] *************************************************
+[WARNING]: Host 'csos@orb' is using the discovered Python interpreter at '/usr/bin/python3.13', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.20/reference_appendices/interpreter_discovery.html for more information.
+
+TASK [Gathering Facts] *********************************************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Prepare /opt/auth/ directory] ****************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Prepare /opt/auth/bootstrap directory] *******************
+ok: [csos@orb]
+
+TASK [../roles/auth : Render docker-compose.yml to /opt/auth/docker-compose.yml] ***
+ok: [csos@orb]
+
+TASK [../roles/auth : Deploy Zitadel runtime config] ***************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Deploy Zitadel init steps] *******************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Load credentials from local facts (subsequent runs)] *****
+skipping: [csos@orb]
+
+TASK [../roles/auth : Render oauth2-proxy config] ******************************
+changed: [csos@orb]
+
+TASK [../roles/auth : Create and start auth services] **************************
+changed: [csos@orb]
+
+TASK [../roles/auth : Bootstrap Zitadel (first run only)] **********************
+included: /Users/josef.kolar/_projs/ob/co-ansible/roles/auth/tasks/bootstrap.yml for csos@orb
+FAILED - RETRYING: [csos@orb]: Wait for Zitadel to be ready (30 retries left).
+
+TASK [../roles/auth : Wait for Zitadel to be ready] ****************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Read Zitadel bootstrap PAT] ******************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Decode Zitadel bootstrap PAT] ****************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Create CSOS project] *************************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Search existing CSOS project] ****************************
+skipping: [csos@orb]
+
+TASK [../roles/auth : Set CSOS project ID] *************************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Fail when CSOS project is missing after bootstrap lookup] ***
+ok: [csos@orb] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [../roles/auth : Create oauth2-proxy OIDC app] ****************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Set oauth2-proxy client credentials] *********************
+ok: [csos@orb]
+
+TASK [../roles/auth : Create Grafana OIDC app] *********************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Set Grafana client credentials] **************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Create project roles] ************************************
+ok: [csos@orb] => (item=(censored due to no_log))
+ok: [csos@orb] => (item=(censored due to no_log))
+ok: [csos@orb] => (item=(censored due to no_log))
+ok: [csos@orb] => (item=(censored due to no_log))
+
+TASK [../roles/auth : Configure Google identity provider] **********************
+ok: [csos@orb]
+
+TASK [../roles/auth : Import test users] ***************************************
+ok: [csos@orb] => (item=(censored due to no_log))
+ok: [csos@orb] => (item=(censored due to no_log))
+
+TASK [../roles/auth : Search test users] ***************************************
+ok: [csos@orb] => (item=(censored due to no_log))
+ok: [csos@orb] => (item=(censored due to no_log))
+
+TASK [../roles/auth : Build test user map] *************************************
+ok: [csos@orb] => (item=(censored due to no_log))
+ok: [csos@orb] => (item=(censored due to no_log))
+
+TASK [../roles/auth : Fail when test users are missing after import/search] ****
+ok: [csos@orb] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [../roles/auth : Grant project roles to test users] ***********************
+ok: [csos@orb] => (item=(censored due to no_log))
+ok: [csos@orb] => (item=(censored due to no_log))
+
+TASK [../roles/auth : Ensure local facts directory exists] *********************
+ok: [csos@orb]
+
+TASK [../roles/auth : Persist auth credentials as local facts] *****************
+changed: [csos@orb]
+
+TASK [../roles/auth : Set real oauth2-proxy credentials] ***********************
+ok: [csos@orb]
+
+TASK [../roles/auth : Re-render oauth2-proxy config with real credentials] *****
+changed: [csos@orb]
+
+RUNNING HANDLER [../roles/auth : Restart oauth2-proxy] *************************
+changed: [csos@orb]
+
+TASK [../roles/auth : Prepare /var/www/credentials directory] ******************
+ok: [csos@orb]
+
+TASK [../roles/auth : Deploy credentials dashboard] ****************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Prepare /var/www/demo directory] *************************
+ok: [csos@orb]
+
+TASK [../roles/auth : Deploy demo page] ****************************************
+ok: [csos@orb]
+
+TASK [../roles/web_proxy : UFW allow 80] ***************************************
+ok: [csos@orb]
+
+TASK [../roles/web_proxy : UFW allow 443] **************************************
+ok: [csos@orb]
+
+TASK [include_role : caddy_ansible.caddy_ansible] ******************************
+included: caddy_ansible.caddy_ansible for csos@orb
+
+TASK [caddy_ansible.caddy_ansible : Include tasks for pre-setup checks] ********
+included: /Users/josef.kolar/.ansible/roles/caddy_ansible.caddy_ansible/tasks/preflight.yml for csos@orb
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /Users/josef.kolar/.ansible/roles/caddy_ansible.caddy_ansible/tasks/preflight.yml:4:11
+
+2 - name: Assert usage of systemd as an init system
+3   ansible.builtin.assert:
+4     that: ansible_service_mgr == 'systemd'
+            ^ column 11
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+
+TASK [caddy_ansible.caddy_ansible : Assert usage of systemd as an init system] ***
+ok: [csos@orb] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [caddy_ansible.caddy_ansible : Get systemd version] ***********************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Set systemd version fact] ******************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Include tasks to install packages] *********
+included: /Users/josef.kolar/.ansible/roles/caddy_ansible.caddy_ansible/tasks/packages-apt.yml for csos@orb
+
+TASK [caddy_ansible.caddy_ansible : Update cache] ******************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Install procps] ****************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Install libcap] ****************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Create Caddy user] *************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Build headers to use when making requests to github] ***
+skipping: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Get all Caddy releases] ********************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Set Caddy features] ************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Include tasks to build github URL if downloading from github] ***
+included: /Users/josef.kolar/.ansible/roles/caddy_ansible.caddy_ansible/tasks/github-url.yml for csos@orb
+
+TASK [caddy_ansible.caddy_ansible : Get latest Caddy release details] **********
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Set Caddy tag] *****************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Set Caddy version] *************************
+ok: [csos@orb]
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /Users/josef.kolar/.ansible/roles/caddy_ansible.caddy_ansible/vars/main.yml:12:10
+
+10   armv6l: 'armv6'
+11
+12 go_arch: "{{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}"
+            ^ column 10
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+
+TASK [caddy_ansible.caddy_ansible : Set Caddy urls] ****************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Download Caddy] ****************************
+skipping: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Download Caddy] ****************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Include tasks to extract files if downloading from github] ***
+included: /Users/josef.kolar/.ansible/roles/caddy_ansible.caddy_ansible/tasks/github-extract.yml for csos@orb
+
+TASK [caddy_ansible.caddy_ansible : Extract Caddy] *****************************
+skipping: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Extract Caddy] *****************************
+skipping: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Copy Caddy Binary] *************************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Create directories] ************************
+ok: [csos@orb] => (item=/etc/caddy)
+ok: [csos@orb] => (item=/etc/ssl/caddy)
+
+TASK [caddy_ansible.caddy_ansible : Create log directory] **********************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Get information about Caddy config file] ***
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Create caddy config] ***********************
+skipping: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Template systemd service] ******************
+ok: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Set capability on the binary file to be able to bind to TCP port <1024] ***
+changed: [csos@orb]
+
+TASK [caddy_ansible.caddy_ansible : Start Caddy service] ***********************
+ok: [csos@orb]
+
+TASK [../roles/web_proxy : Deploy Caddyfile] ***********************************
+ok: [csos@orb]
+
+PLAY RECAP *********************************************************************
+csos@orb                   : ok=64   changed=6    unreachable=0    failed=0    skipped=7    rescued=0    ignored=0   
+
