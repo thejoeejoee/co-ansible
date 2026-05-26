@@ -2,16 +2,19 @@
   ansible.builtin.file:
     path: "{{ gfx__home_dir }}/"
     state: directory
+  become: true
 
 - name: Prepare {{ gfx__home_dir }}/config directory
   ansible.builtin.file:
     path: "{{ gfx__home_dir }}/config"
     state: directory
+  become: true
 
 - name: Prepare {{ gfx__home_dir }}/data directory
   ansible.builtin.file:
     path: "{{ gfx__home_dir }}/data"
     state: directory
+  become: true
 
 - name: synchronize Flask control source to {{ gfx__home_dir }}/control/
   synchronize:
@@ -40,12 +43,14 @@
     src: config.json.j2
     dest: "{{ gfx__home_dir }}/config/config.json"
     force: false
+  become: true
 
 - name: Read current settings.json
   ansible.builtin.slurp:
     src: "{{ gfx__home_dir }}/config/settings.json"
   register: _gfx_current_settings
   failed_when: false
+  become: true
 
 - name: Preserve current event_id from server
   ansible.builtin.set_fact:
@@ -56,11 +61,13 @@
   ansible.builtin.template:
     src: settings.json.j2
     dest: "{{ gfx__home_dir }}/config/settings.json"
+  become: true
 
 - name: Render docker-compose.yml to {{ gfx__home_dir }}/docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml
     dest: "{{ gfx__home_dir }}/docker-compose.yml"
+  become: true
 
 - name: Create and start gfx services
   community.docker.docker_compose_v2:
@@ -68,3 +75,4 @@
     files:
       - docker-compose.yml
     build: always
+  become: true
