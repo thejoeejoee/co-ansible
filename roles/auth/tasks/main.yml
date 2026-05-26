@@ -27,11 +27,31 @@
     mode: '0600'
   become: true
 
+- name: Render oauth2-proxy config
+  ansible.builtin.template:
+    src: oauth2-proxy.cfg.j2
+    dest: "{{ auth__home_dir }}/oauth2-proxy.cfg"
+    mode: '0600'
+  become: true
+
 - name: Create and start auth services
   community.docker.docker_compose_v2:
     project_src: "{{ auth__home_dir }}/"
     files:
       - docker-compose.yml
+
+- name: Bootstrap Zitadel (first run only)
+  ansible.builtin.include_tasks: bootstrap.yml
+  when: not (ansible_local.auth_credentials is defined)
+
+- name: Load credentials from local facts (subsequent runs)
+  ansible.builtin.set_fact:
+    auth__oauth2_proxy_client_id: "{{ ansible_local.auth_credentials.oauth2_proxy.client_id }}"
+    auth__oauth2_proxy_client_secret: "{{ ansible_local.auth_credentials.oauth2_proxy.client_secret }}"
+    auth__grafana_oidc_client_id: "{{ ansible_local.auth_credentials.grafana.client_id }}"
+    auth__grafana_oidc_client_secret: "{{ ansible_local.auth_credentials.grafana.client_secret }}"
+  when: ansible_local.auth_credentials is defined
+  no_log: true
 
 - name: Prepare /var/www/credentials directory
   ansible.builtin.file:

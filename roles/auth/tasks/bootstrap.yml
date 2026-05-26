@@ -1,0 +1,420 @@
+- name: Wait for Zitadel to be ready
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/.well-known/openid-configuration"
+    validate_certs: false
+    status_code: 200
+  register: _zitadel_ready
+  until: _zitadel_ready.status == 200
+  retries: 30
+  delay: 10
+
+- name: Read Zitadel bootstrap PAT
+  ansible.builtin.slurp:
+    src: "{{ auth__home_dir }}/bootstrap/admin.pat"
+  register: _pat_raw
+  become: true
+  no_log: true
+
+- name: Decode Zitadel bootstrap PAT
+  ansible.builtin.set_fact:
+    _auth_pat: "{{ _pat_raw.content | b64decode | trim }}"
+  no_log: true
+
+- name: Create CSOS project
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/projects"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      name: CSOS
+    validate_certs: false
+    status_code: [200, 201, 409]
+  register: _project_create
+  no_log: true
+
+- name: Search existing CSOS project
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/projects/_search"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      queries:
+        - nameQuery:
+            name: CSOS
+            method: TEXT_QUERY_METHOD_EQUALS
+    validate_certs: false
+    status_code: 200
+  register: _project_search
+  when: _project_create.status == 409
+  no_log: true
+
+- name: Set CSOS project ID
+  ansible.builtin.set_fact:
+    _project_id: >-
+      {{
+        _project_create.json.id
+        if _project_create.status in [200, 201]
+        else _project_search.json.result[0].id
+      }}
+    _project_org_id: >-
+      {{
+        _project_create.json.details.resourceOwner
+        if _project_create.status in [200, 201]
+        else _project_search.json.result[0].details.resourceOwner
+      }}
+
+- name: Fail when CSOS project is missing after bootstrap lookup
+  ansible.builtin.assert:
+    that:
+      - _project_id | length > 0
+      - _project_org_id | length > 0
+    fail_msg: Failed to resolve CSOS project metadata from Zitadel API
+
+- name: Create oauth2-proxy OIDC app
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/apps/oidc"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      name: oauth2-proxy
+      redirectUris:
+        - "https://{{ web_proxy__domain }}/oauth2/callback"
+      responseTypes:
+        - OIDC_RESPONSE_TYPE_CODE
+      grantTypes:
+        - OIDC_GRANT_TYPE_AUTHORIZATION_CODE
+        - OIDC_GRANT_TYPE_REFRESH_TOKEN
+      appType: OIDC_APP_TYPE_WEB
+      authMethodType: OIDC_AUTH_METHOD_TYPE_POST
+      version: OIDC_VERSION_1
+      devMode: false
+      accessTokenType: OIDC_TOKEN_TYPE_JWT
+      accessTokenRoleAssertion: true
+      idTokenRoleAssertion: true
+      idTokenUserinfoAssertion: true
+    validate_certs: false
+    status_code: [200, 201]
+  register: _oauth2_proxy_app
+  no_log: true
+
+- name: Set oauth2-proxy client credentials
+  ansible.builtin.set_fact:
+    _oauth2_proxy_client_id: "{{ _oauth2_proxy_app.json.clientId }}"
+    _oauth2_proxy_client_secret: "{{ _oauth2_proxy_app.json.clientSecret }}"
+  no_log: true
+
+- name: Create Grafana OIDC app
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/apps/oidc"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      name: grafana
+      redirectUris:
+        - "https://{{ web_proxy__domain }}/grafana/login/generic_oauth"
+      responseTypes:
+        - OIDC_RESPONSE_TYPE_CODE
+      grantTypes:
+        - OIDC_GRANT_TYPE_AUTHORIZATION_CODE
+        - OIDC_GRANT_TYPE_REFRESH_TOKEN
+      appType: OIDC_APP_TYPE_WEB
+      authMethodType: OIDC_AUTH_METHOD_TYPE_POST
+      version: OIDC_VERSION_1
+      devMode: false
+      accessTokenType: OIDC_TOKEN_TYPE_JWT
+      accessTokenRoleAssertion: true
+      idTokenRoleAssertion: true
+      idTokenUserinfoAssertion: true
+    validate_certs: false
+    status_code: [200, 201]
+  register: _grafana_app
+  no_log: true
+
+- name: Set Grafana client credentials
+  ansible.builtin.set_fact:
+    _grafana_client_id: "{{ _grafana_app.json.clientId }}"
+    _grafana_client_secret: "{{ _grafana_app.json.clientSecret }}"
+  no_log: true
+
+- name: Create project roles
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/roles"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      roleKey: "{{ item.key }}"
+      displayName: "{{ item.display_name }}"
+    validate_certs: false
+    status_code: [200, 201, 409]
+  loop:
+    - { key: admin, display_name: Admin }
+    - { key: production, display_name: Production }
+    - { key: gfx, display_name: Gfx }
+    - { key: demo, display_name: Demo }
+  loop_control:
+    label: "{{ item.key }}"
+  no_log: true
+
+- name: Configure Google identity provider
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/admin/v1/idps/google"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      name: Google
+      clientId: "{{ auth__google_client_id }}"
+      clientSecret: "{{ auth__google_client_secret }}"
+      scopes:
+        - email
+        - profile
+        - openid
+      isCreationAllowed: true
+      isLinkingAllowed: true
+      isAutoCreation: true
+      isAutoUpdate: true
+    validate_certs: false
+    status_code: [200, 201, 409]
+  no_log: true
+
+- name: Provision test users
+  when: auth__provision_test_users | default(false)
+  block:
+    - name: Import test users
+      ansible.builtin.uri:
+        url: "https://{{ auth__domain }}/management/v1/users/human/_import"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ _auth_pat }}"
+          Content-Type: application/json
+          Accept: application/json
+        body_format: json
+        body:
+          userName: "{{ item.username }}"
+          profile:
+            firstName: "{{ item.first_name }}"
+            lastName: "{{ item.last_name }}"
+            displayName: "{{ item.display_name }}"
+            preferredLanguage: en
+          email:
+            email: "{{ item.email }}"
+            isEmailVerified: true
+          hashedPassword:
+            value: "{{ item.password_hash }}"
+            algorithm: bcrypt
+          passwordChangeRequired: false
+          requestPasswordlessRegistration: false
+        validate_certs: false
+        status_code: [200, 201, 409]
+      loop:
+        - username: testadmin
+          first_name: Test
+          last_name: Admin
+          display_name: Test Admin
+          email: "testadmin@{{ auth__zitadel_external_domain }}"
+          role: admin
+          password_hash: "$2y$10$Y0uYob4ThgLuvf8Q2Q0f8e6tSx6wQjqjM90oCbGyF/F7kh/3GzdhW"
+        - username: testdemo
+          first_name: Test
+          last_name: Demo
+          display_name: Test Demo
+          email: "testdemo@{{ auth__zitadel_external_domain }}"
+          role: demo
+          password_hash: "$2y$10$Y0uYob4ThgLuvf8Q2Q0f8e6tSx6wQjqjM90oCbGyF/F7kh/3GzdhW"
+      loop_control:
+        label: "{{ item.username }}"
+      register: _test_user_imports
+      no_log: true
+
+    - name: Search test users
+      ansible.builtin.uri:
+        url: "https://{{ auth__domain }}/management/v1/users/_search"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ _auth_pat }}"
+          Content-Type: application/json
+          Accept: application/json
+        body_format: json
+        body:
+          queries:
+            - userNameQuery:
+                userName: "{{ item.username }}"
+                method: TEXT_QUERY_METHOD_EQUALS
+        validate_certs: false
+        status_code: 200
+      loop:
+        - username: testadmin
+          role: admin
+        - username: testdemo
+          role: demo
+      loop_control:
+        label: "{{ item.username }}"
+      register: _test_user_searches
+      no_log: true
+
+    - name: Build test user map
+      ansible.builtin.set_fact:
+        _test_users: >-
+          {{
+            _test_users | default({})
+            | combine({
+                item.item.username: {
+                  'id': item.json.result[0].id,
+                  'role': item.item.role
+                }
+              })
+          }}
+      loop: "{{ _test_user_searches.results }}"
+      loop_control:
+        label: "{{ item.item.username }}"
+      no_log: true
+
+    - name: Fail when test users are missing after import/search
+      ansible.builtin.assert:
+        that:
+          - _test_users.testadmin.id | length > 0
+          - _test_users.testdemo.id | length > 0
+        fail_msg: Failed to resolve test user IDs from Zitadel API
+
+    - name: Create project grant for test users
+      ansible.builtin.uri:
+        url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/grants"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ _auth_pat }}"
+          Content-Type: application/json
+          Accept: application/json
+        body_format: json
+        body:
+          grantedOrgId: "{{ _project_org_id }}"
+          roleKeys:
+            - admin
+            - demo
+        validate_certs: false
+        status_code: [200, 201, 409]
+      register: _project_grants
+      no_log: true
+
+    - name: Search project grants for test users
+      ansible.builtin.uri:
+        url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/grants/_search"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ _auth_pat }}"
+          Content-Type: application/json
+          Accept: application/json
+        body_format: json
+        body:
+          queries:
+            - projectIdQuery:
+                projectId: "{{ _project_id }}"
+            - grantedOrgIdQuery:
+                grantedOrgId: "{{ _project_org_id }}"
+        validate_certs: false
+        status_code: 200
+      register: _project_grants_search
+      no_log: true
+
+    - name: Select shared project grant for test users
+      ansible.builtin.set_fact:
+        _project_grant_id: "{{ item.grantId }}"
+      loop: "{{ _project_grants_search.json.result | default([]) }}"
+      when:
+        - item.grantedRoleKeys is defined
+        - "'admin' in item.grantedRoleKeys"
+        - "'demo' in item.grantedRoleKeys"
+      loop_control:
+        label: "{{ item.grantId }}"
+      no_log: true
+
+    - name: Fail when shared project grant is missing
+      ansible.builtin.assert:
+        that:
+          - _project_grant_id is defined
+          - _project_grant_id | length > 0
+        fail_msg: Failed to resolve shared project grant for test users
+
+    - name: Grant project roles to test users
+      ansible.builtin.uri:
+        url: "https://{{ auth__domain }}/management/v1/users/{{ item.value.id }}/grants"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ _auth_pat }}"
+          Content-Type: application/json
+          Accept: application/json
+        body_format: json
+        body:
+          projectId: "{{ _project_id }}"
+          projectGrantId: "{{ _project_grant_id }}"
+          roleKeys:
+            - "{{ item.value.role }}"
+        validate_certs: false
+        status_code: [200, 201, 409]
+      loop: "{{ _test_users | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      no_log: true
+
+- name: Ensure local facts directory exists
+  ansible.builtin.file:
+    path: /etc/ansible/facts.d
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Persist auth credentials as local facts
+  ansible.builtin.copy:
+    dest: /etc/ansible/facts.d/auth_credentials.fact
+    mode: '0600'
+    content: |
+      [oauth2_proxy]
+      client_id={{ _oauth2_proxy_client_id }}
+      client_secret={{ _oauth2_proxy_client_secret }}
+
+      [grafana]
+      client_id={{ _grafana_client_id }}
+      client_secret={{ _grafana_client_secret }}
+  become: true
+  no_log: true
+
+- name: Set real oauth2-proxy credentials
+  ansible.builtin.set_fact:
+    auth__oauth2_proxy_client_id: "{{ _oauth2_proxy_client_id }}"
+    auth__oauth2_proxy_client_secret: "{{ _oauth2_proxy_client_secret }}"
+    auth__grafana_oidc_client_id: "{{ _grafana_client_id }}"
+    auth__grafana_oidc_client_secret: "{{ _grafana_client_secret }}"
+  no_log: true
+
+- name: Re-render oauth2-proxy config with real credentials
+  ansible.builtin.template:
+    src: oauth2-proxy.cfg.j2
+    dest: "{{ auth__home_dir }}/oauth2-proxy.cfg"
+    mode: '0600'
+  become: true
+  notify: Restart oauth2-proxy
+
+- name: Flush handlers after bootstrap
+  ansible.builtin.meta: flush_handlers

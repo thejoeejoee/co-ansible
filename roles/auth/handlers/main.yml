@@ -4,3 +4,10 @@
     files:
       - docker-compose.yml
     state: restarted
+
+- name: Restart oauth2-proxy
+  community.docker.docker_container:
+    name: auth-oauth2-proxy-1
+    state: started
+    restart: true
+  become: true
