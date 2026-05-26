@@ -1,0 +1,9 @@
+csos@orb | SUCCESS => {
+    "auth__domain": "auth.csos.orb.local"
+}
+csos@orb | SUCCESS => {
+    "credentials.demo_write": {
+        "pass": "demostream123",
+        "user": "demostream"
+    }
+}

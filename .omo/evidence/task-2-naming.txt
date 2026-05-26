@@ -1,0 +1,2 @@
+vault_auth__ count: 11
+auth__ count in orb.yaml: 12

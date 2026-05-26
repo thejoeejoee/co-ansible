@@ -1,0 +1,20 @@
+[WARNING]: Host 'csos@orb' is using the discovered Python interpreter at '/usr/bin/python3.13', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.20/reference_appendices/interpreter_discovery.html for more information.
+csos@orb | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "ad658d823704247af46962f4c981e64c8ca4a84a",
+    "dest": "/tmp/mediamtx-test.yml",
+    "gid": 502,
+    "group": "josef_kolar",
+    "md5sum": "2b5d9db13725969661425be58126e497",
+    "mode": "0644",
+    "owner": "josef_kolar",
+    "size": 2030,
+    "src": "~csos/.ansible/tmp/ansible-tmp-1779799015.002114-84507-59314723474611/.source.yml",
+    "state": "file",
+    "uid": 502
+}
+97:# # - user: "demostream"
+98:  pass: "demostream123"
