@@ -7,6 +7,7 @@
   ansible.builtin.file:
     path: "{{ auth__home_dir }}/bootstrap"
     state: directory
+    mode: '0777'
 
 - name: Render docker-compose.yml to {{ auth__home_dir }}/docker-compose.yml
   ansible.builtin.template:
@@ -17,21 +18,30 @@
   ansible.builtin.template:
     src: zitadel-config.yaml.j2
     dest: "{{ auth__home_dir }}/zitadel-config.yaml"
-    mode: '0600'
+    mode: '0644'
   become: true
 
 - name: Deploy Zitadel init steps
   ansible.builtin.template:
     src: zitadel-init-steps.yaml.j2
     dest: "{{ auth__home_dir }}/zitadel-init-steps.yaml"
-    mode: '0600'
+    mode: '0644'
   become: true
+
+- name: Load credentials from local facts (subsequent runs)
+  ansible.builtin.set_fact:
+    auth__oauth2_proxy_client_id: "{{ ansible_local.auth_credentials.oauth2_proxy.client_id }}"
+    auth__oauth2_proxy_client_secret: "{{ ansible_local.auth_credentials.oauth2_proxy.client_secret }}"
+    auth__grafana_oidc_client_id: "{{ ansible_local.auth_credentials.grafana.client_id }}"
+    auth__grafana_oidc_client_secret: "{{ ansible_local.auth_credentials.grafana.client_secret }}"
+  when: ansible_local.auth_credentials is defined
+  no_log: true
 
 - name: Render oauth2-proxy config
   ansible.builtin.template:
     src: oauth2-proxy.cfg.j2
     dest: "{{ auth__home_dir }}/oauth2-proxy.cfg"
-    mode: '0600'
+    mode: '0644'
   become: true
 
 - name: Create and start auth services
@@ -43,15 +53,6 @@
 - name: Bootstrap Zitadel (first run only)
   ansible.builtin.include_tasks: bootstrap.yml
   when: not (ansible_local.auth_credentials is defined)
-
-- name: Load credentials from local facts (subsequent runs)
-  ansible.builtin.set_fact:
-    auth__oauth2_proxy_client_id: "{{ ansible_local.auth_credentials.oauth2_proxy.client_id }}"
-    auth__oauth2_proxy_client_secret: "{{ ansible_local.auth_credentials.oauth2_proxy.client_secret }}"
-    auth__grafana_oidc_client_id: "{{ ansible_local.auth_credentials.grafana.client_id }}"
-    auth__grafana_oidc_client_secret: "{{ ansible_local.auth_credentials.grafana.client_secret }}"
-  when: ansible_local.auth_credentials is defined
-  no_log: true
 
 - name: Prepare /var/www/credentials directory
   ansible.builtin.file:

@@ -1,13 +1,9 @@
 - name: Restart auth stack
-  community.docker.docker_compose_v2:
-    project_src: /opt/auth/
-    files:
-      - docker-compose.yml
-    state: restarted
+  ansible.builtin.command:
+    cmd: docker compose -f /opt/auth/docker-compose.yml restart
+  become: true
 
 - name: Restart oauth2-proxy
-  community.docker.docker_container:
-    name: auth-oauth2-proxy-1
-    state: started
-    restart: true
+  ansible.builtin.command:
+    cmd: docker compose -f /opt/auth/docker-compose.yml restart oauth2-proxy
   become: true

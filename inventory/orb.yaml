@@ -31,10 +31,11 @@ csos:
     auth__zitadel_external_domain: auth.csos.orb.local
     auth__zitadel_external_port: 443
     auth__postgres_password: devpassword
-    auth__zitadel_masterkey: dev-masterkey-32chars-padded00
+    auth__zitadel_masterkey: dev-masterkey-orbstack-32bytes!!
     auth__oauth2_proxy_client_id: placeholder-client-id
     auth__oauth2_proxy_client_secret: placeholder-client-secret
-    auth__oauth2_proxy_cookie_secret: ZGV2LWNvb2tpZS1zZWNyZXQtMzItYnl0ZXMh
+    auth__oauth2_proxy_cookie_secret: dev-cookie-for-orbstack-32bytes!
     auth__google_client_id: placeholder-google-client-id
     auth__google_client_secret: placeholder-google-client-secret
+    auth__zitadel_admin_pass: DevAdmin1!
     auth__provision_test_users: true

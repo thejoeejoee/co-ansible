@@ -14,7 +14,7 @@ services:
       retries: 5
 
   zitadel-api:
-    image: ghcr.io/zitadel/zitadel:latest
+    image: {{ auth__zitadel_image }}
     command: start-from-init --masterkey "{{ auth__zitadel_masterkey }}" --tlsMode external --config /zitadel/config.yaml --steps /zitadel/steps.yaml
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: postgres
@@ -40,7 +40,7 @@ services:
         condition: service_healthy
 
   zitadel-login:
-    image: ghcr.io/zitadel/zitadel:latest
+    image: {{ auth__zitadel_image }}
     command: start-from-init --masterkey "{{ auth__zitadel_masterkey }}" --tlsMode external --config /zitadel/config.yaml --steps /zitadel/steps.yaml
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: postgres
