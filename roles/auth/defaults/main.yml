@@ -5,3 +5,4 @@ auth__oauth2_proxy_port: 4180
 auth__zitadel_external_port: 443
 
 # auth__zitadel_masterkey must be exactly 32 chars; provide via inventory.
+auth__zitadel_admin_pass: changeme-in-inventory
