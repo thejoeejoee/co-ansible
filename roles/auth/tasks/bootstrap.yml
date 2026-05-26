@@ -1,7 +1,6 @@
 - name: Wait for Zitadel to be ready
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/.well-known/openid-configuration"
-    validate_certs: false
+    url: "http://localhost:{{ auth__zitadel_port }}/debug/ready"
     status_code: 200
   register: _zitadel_ready
   until: _zitadel_ready.status == 200
@@ -22,7 +21,7 @@
 
 - name: Create CSOS project
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/projects"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/projects"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -31,14 +30,13 @@
     body_format: json
     body:
       name: CSOS
-    validate_certs: false
     status_code: [200, 201, 409]
   register: _project_create
   no_log: true
 
 - name: Search existing CSOS project
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/projects/_search"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/projects/_search"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -50,7 +48,6 @@
         - nameQuery:
             name: CSOS
             method: TEXT_QUERY_METHOD_EQUALS
-    validate_certs: false
     status_code: 200
   register: _project_search
   when: _project_create.status == 409
@@ -80,7 +77,7 @@
 
 - name: Enable projectRoleAssertion on CSOS project
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/projects/{{ _project_id }}"
     method: PUT
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -93,13 +90,12 @@
       projectRoleCheck: false
       hasProjectCheck: false
       privateLabelingSetting: PRIVATE_LABELING_SETTING_UNSPECIFIED
-    validate_certs: false
     status_code: [200]
   no_log: true
 
 - name: Create oauth2-proxy OIDC app
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/apps/oidc"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/projects/{{ _project_id }}/apps/oidc"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -123,7 +119,6 @@
       accessTokenRoleAssertion: true
       idTokenRoleAssertion: true
       idTokenUserinfoAssertion: true
-    validate_certs: false
     status_code: [200, 201]
   register: _oauth2_proxy_app
   no_log: true
@@ -136,7 +131,7 @@
 
 - name: Create Grafana OIDC app
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/apps/oidc"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/projects/{{ _project_id }}/apps/oidc"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -160,7 +155,6 @@
       accessTokenRoleAssertion: true
       idTokenRoleAssertion: true
       idTokenUserinfoAssertion: true
-    validate_certs: false
     status_code: [200, 201]
   register: _grafana_app
   no_log: true
@@ -173,7 +167,7 @@
 
 - name: Create project roles
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/roles"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/projects/{{ _project_id }}/roles"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -183,7 +177,6 @@
     body:
       roleKey: "{{ item.key }}"
       displayName: "{{ item.display_name }}"
-    validate_certs: false
     status_code: [200, 201, 409]
   loop:
     - { key: admin, display_name: Admin }
@@ -196,7 +189,7 @@
 
 - name: Create flatRoles action for token enrichment
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/actions"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/actions"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -224,14 +217,13 @@
         }
       timeout: "10s"
       allowedToFail: true
-    validate_certs: false
     status_code: [200, 201, 409]
   register: _flat_roles_action
   no_log: true
 
 - name: Search existing flatRoles action
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/actions/_search"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/actions/_search"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -243,7 +235,6 @@
         - actionNameQuery:
             name: flatRoles
             method: TEXT_QUERY_METHOD_EQUALS
-    validate_certs: false
     status_code: 200
   register: _flat_roles_search
   when: _flat_roles_action.status == 409
@@ -260,7 +251,7 @@
 
 - name: Set flatRoles action on complement token flow triggers
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/management/v1/flows/2/trigger/{{ item }}"
+    url: "http://localhost:{{ auth__zitadel_port }}/management/v1/flows/2/trigger/{{ item }}"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -270,7 +261,6 @@
     body:
       actionIds:
         - "{{ _flat_roles_action_id }}"
-    validate_certs: false
     status_code: [200, 400]
   loop:
     - 4  # Pre Userinfo Creation
@@ -279,7 +269,7 @@
 
 - name: Configure Google identity provider
   ansible.builtin.uri:
-    url: "https://{{ auth__domain }}/admin/v1/idps/google"
+    url: "http://localhost:{{ auth__zitadel_port }}/admin/v1/idps/google"
     method: POST
     headers:
       Authorization: "Bearer {{ _auth_pat }}"
@@ -298,7 +288,6 @@
       isLinkingAllowed: true
       isAutoCreation: true
       isAutoUpdate: true
-    validate_certs: false
     status_code: [200, 201, 409]
   no_log: true
 
@@ -307,7 +296,7 @@
   block:
     - name: Import test users
       ansible.builtin.uri:
-        url: "https://{{ auth__domain }}/management/v1/users/human/_import"
+        url: "http://localhost:{{ auth__zitadel_port }}/management/v1/users/human/_import"
         method: POST
         headers:
           Authorization: "Bearer {{ _auth_pat }}"
@@ -329,7 +318,6 @@
             algorithm: bcrypt
           passwordChangeRequired: false
           requestPasswordlessRegistration: false
-        validate_certs: false
         status_code: [200, 201, 409]
       loop:
         - username: testadmin
@@ -353,7 +341,7 @@
 
     - name: Search test users
       ansible.builtin.uri:
-        url: "https://{{ auth__domain }}/management/v1/users/_search"
+        url: "http://localhost:{{ auth__zitadel_port }}/management/v1/users/_search"
         method: POST
         headers:
           Authorization: "Bearer {{ _auth_pat }}"
@@ -365,7 +353,6 @@
             - userNameQuery:
                 userName: "{{ item.username }}"
                 method: TEXT_QUERY_METHOD_EQUALS
-        validate_certs: false
         status_code: 200
       loop:
         - username: testadmin
@@ -403,7 +390,7 @@
 
     - name: Grant project roles to test users
       ansible.builtin.uri:
-        url: "https://{{ auth__domain }}/management/v1/users/{{ item.value.id }}/grants"
+        url: "http://localhost:{{ auth__zitadel_port }}/management/v1/users/{{ item.value.id }}/grants"
         method: POST
         headers:
           Authorization: "Bearer {{ _auth_pat }}"
@@ -414,7 +401,6 @@
           projectId: "{{ _project_id }}"
           roleKeys:
             - "{{ item.value.role }}"
-        validate_certs: false
         status_code: [200, 201, 409]
       loop: "{{ _test_users | dict2items }}"
       loop_control:
