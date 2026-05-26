@@ -1,0 +1,4 @@
+
+playbook: playbooks/setup.yml
+
+syntax-check-exit-code: 0

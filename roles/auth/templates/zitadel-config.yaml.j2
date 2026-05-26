@@ -1,0 +1,22 @@
+ExternalDomain: "{{ auth__zitadel_external_domain }}"
+ExternalPort: {{ auth__zitadel_external_port }}
+ExternalSecure: true
+
+TLS:
+  Mode: external
+
+DefaultInstance:
+  OIDCSettings:
+    AccessTokenLifetime: 12h
+    IdTokenLifetime: 12h
+    RefreshTokenExpiration: 720h
+    RefreshTokenIdleExpiration: 168h
+    DefaultLoginPolicy:
+      AllowUsernamePassword: true
+      PasswordlessType: 0
+      AllowRegister: false
+
+LogStore:
+  Access:
+    Stdout:
+      Enabled: true

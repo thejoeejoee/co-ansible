@@ -1,0 +1,25 @@
+[WARNING]: Host 'csos@orb' is using the discovered Python interpreter at '/usr/bin/python3.13', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.20/reference_appendices/interpreter_discovery.html for more information.
+csos@orb | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "5d7f7375bc202570948306102714b6ca74594bb3",
+    "dest": "/tmp/zitadel-steps-test.yaml",
+    "gid": 502,
+    "group": "josef_kolar",
+    "md5sum": "7629222344e9b05af57a7e19bb7963b2",
+    "mode": "0644",
+    "owner": "josef_kolar",
+    "size": 496,
+    "src": "~csos/.ansible/tmp/ansible-tmp-1779799770.774464-86346-229877009150235/.source.yaml",
+    "state": "file",
+    "uid": 502
+}
+EXIT: 0
+grep: /zitadel/bootstrap/admin.pat: No such file or directory
+/tmp/zitadel-steps-test.yaml:  PatPath: /zitadel/bootstrap/admin.pat
+      UserName: "admin@auth.csos.orb.local"
+        Address: "admin@auth.csos.orb.local"
+0
+0 raw tags

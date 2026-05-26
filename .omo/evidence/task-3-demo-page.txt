@@ -1,0 +1,22 @@
+[WARNING]: Host 'csos@orb' is using the discovered Python interpreter at '/usr/bin/python3.13', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.20/reference_appendices/interpreter_discovery.html for more information.
+csos@orb | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "52701353d0adbbee52fce50482b4a4309b53fdae",
+    "dest": "/tmp/demo-test.html",
+    "gid": 502,
+    "group": "josef_kolar",
+    "md5sum": "85978d1eb76ad082866bd1f4f7538903",
+    "mode": "0644",
+    "owner": "josef_kolar",
+    "size": 2561,
+    "src": "~csos/.ansible/tmp/ansible-tmp-1779798988.323084-84375-155237662154479/.source.html",
+    "state": "file",
+    "uid": 502
+}
+                <input readonly value="rtmp://csos.orb.local:1935/x/demo?user=demostream&pass=demostream123">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+0
+0 production slots

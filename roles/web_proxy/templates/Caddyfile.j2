@@ -8,45 +8,179 @@ http://localhost:2019 {
     metrics
 }
 
+auth.{{ web_proxy__domain }} {
+{% if web_proxy__disable_tls | default(false) %}
+    tls internal
+{% endif %}
+    reverse_proxy localhost:{{ auth__zitadel_port | default(8080) }} {
+        header_up -TE
+    }
+}
+
 {{ web_proxy__domain }} {
 {% if web_proxy__disable_tls | default(false) %}
     tls internal
 {% endif %}
-    @telemetry path /prometheus/* /grafana/*
 
-    handle_path /hls/* {
-        reverse_proxy {
-            to localhost:8888
-            header_down Location ^/ /hls/
-        }
+    # oauth2-proxy endpoints — public (must come first)
+    handle /oauth2/* {
+        reverse_proxy localhost:{{ auth__oauth2_proxy_port | default(4180) }}
     }
-    handle_path /webrtc/* {
-        reverse_proxy {
-            to localhost:8889
-            header_down Location ^/ /webrtc/
-        }
-    }
+
+    # Public paths (no auth)
     handle_path /snapshots/* {
         root * /var/mediamtx/snapshots
         file_server
     }
 
-    basic_auth @telemetry {
-{% for cred in credentials.telemetry %}
-        {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
-{% endfor %}
+    # Demo HLS/WebRTC — admin OR production OR demo (MORE SPECIFIC, before generic /hls/*)
+    handle_path /hls/x/demo/* {
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
+        }
+        @no_group_demo {
+            not header_regexp X-Auth-Request-Groups "(^|,)(admin|production|demo)(,|$)"
+        }
+        respond @no_group_demo 403
+        reverse_proxy {
+            to localhost:8888
+            header_down Location ^/ /hls/
+        }
     }
 
-    # handle, do not strip /prometheus
+    # All HLS — admin OR production
+    handle_path /hls/* {
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
+        }
+        @no_group_hls {
+            not header_regexp X-Auth-Request-Groups "(^|,)(admin|production)(,|$)"
+        }
+        respond @no_group_hls 403
+        reverse_proxy {
+            to localhost:8888
+            header_down Location ^/ /hls/
+        }
+    }
+
+    # Demo WebRTC — admin OR production OR demo (MORE SPECIFIC, before generic /webrtc/*)
+    handle_path /webrtc/x/demo/* {
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
+        }
+        @no_group_demo_webrtc {
+            not header_regexp X-Auth-Request-Groups "(^|,)(admin|production|demo)(,|$)"
+        }
+        respond @no_group_demo_webrtc 403
+        reverse_proxy {
+            to localhost:8889
+            header_down Location ^/ /webrtc/
+        }
+    }
+
+    # All WebRTC — admin OR production
+    handle_path /webrtc/* {
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
+        }
+        @no_group_webrtc {
+            not header_regexp X-Auth-Request-Groups "(^|,)(admin|production)(,|$)"
+        }
+        respond @no_group_webrtc 403
+        reverse_proxy {
+            to localhost:8889
+            header_down Location ^/ /webrtc/
+        }
+    }
+
+    # Prometheus — admin only
     handle /prometheus/* {
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
+        }
+        @no_group_prom {
+            not header_regexp X-Auth-Request-Groups "(^|,)(admin)(,|$)"
+        }
+        respond @no_group_prom 403
         reverse_proxy localhost:9090
     }
 
-    # handle, strip /grafana
+    # Grafana — native OIDC, no forward_auth (Grafana handles its own auth)
     handle_path /grafana/* {
         reverse_proxy localhost:3000
     }
 
+    # Credentials dashboard — admin OR production
+    handle /credentials* {
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
+        }
+        @no_group_cred {
+            not header_regexp X-Auth-Request-Groups "(^|,)(admin|production)(,|$)"
+        }
+        respond @no_group_cred 403
+        uri strip_prefix /credentials
+        root * /var/www/credentials
+        file_server
+    }
+
+    # Demo page — admin OR demo
+    handle /demo* {
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
+        }
+        @no_group_demo_page {
+            not header_regexp X-Auth-Request-Groups "(^|,)(admin|demo)(,|$)"
+        }
+        respond @no_group_demo_page 403
+        uri strip_prefix /demo
+        root * /var/www/demo
+        file_server
+    }
+
+    # Landing page — public
     handle {
         header Content-Type "text/html; charset=utf-8"
         respond <<HTML
@@ -72,12 +206,13 @@ http://localhost:2019 {
                 <li><a href="/grafana/">Grafana</a> <small>— monitoring dashboards</small></li>
                 <li><a href="/prometheus/">Prometheus</a> <small>— metrics</small></li>
                 <li><a href="/hls/">HLS player</a> <small>— stream playback</small></li>
+                <li><a href="/credentials/">Stream Credentials</a> <small>— ingest URLs</small></li>
+                <li><a href="/demo/">Demo Stream</a> <small>— demo slot</small></li>
                 <li><a href="https://gfx.{{ web_proxy__domain }}/">GFX Control</a> <small>— graphics control panel</small></li>
                 <li><a href="{{ gfx__github_pages_url }}">GFX Overlay</a> <small>— stream overlay (GitHub Pages)</small></li>
             </ul>
             <h2 style="font-size:1rem;margin-top:2rem;">OBS Browser Source</h2>
-            <input readonly value="{{ gfx__github_pages_url }}?sse=https://gfx.{{ web_proxy__domain }}/_sse/" onclick="this.select()" style="width:100%;padding:.4rem;font:inherit;font-size:.85rem;border:1px solid #ccc;border-radius:4px;color:#333;background:#f8f8f8;cursor:text;"
-            >
+            <input readonly value="{{ gfx__github_pages_url }}?sse=https://gfx.{{ web_proxy__domain }}/_sse/" onclick="this.select()" style="width:100%;padding:.4rem;font:inherit;font-size:.85rem;border:1px solid #ccc;border-radius:4px;color:#333;background:#f8f8f8;cursor:text;">
         </body>
         </html>
         HTML
@@ -103,28 +238,49 @@ gfx.{{ web_proxy__domain }} {
 {% if web_proxy__disable_tls | default(false) %}
     tls internal
 {% endif %}
+    # SSE endpoint — public (OBS can't OAuth)
     handle /_sse/* {
         reverse_proxy localhost:{{ gfx__proxy_host_port }} {
             flush_interval -1
         }
     }
 
+    # GFX director API — admin OR gfx group
     handle /api/director-favorite {
         @post method POST
-        basic_auth @post {
-{% for cred in credentials.gfx %}
-            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
-{% endfor %}
+        handle @post {
+            forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+                uri /oauth2/auth
+                header_up X-Real-IP {remote_host}
+                copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+                @unauth status 401
+                handle_response @unauth {
+                    redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+                }
+            }
+            @no_group_gfx_api {
+                not header_regexp X-Auth-Request-Groups "(^|,)(admin|gfx)(,|$)"
+            }
+            respond @no_group_gfx_api 403
+            reverse_proxy localhost:{{ gfx__control_host_port }}
         }
-        reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 
+    # GFX main — admin OR gfx group
     handle {
-        basic_auth {
-{% for cred in credentials.gfx %}
-            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
-{% endfor %}
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
         }
+        @no_group_gfx {
+            not header_regexp X-Auth-Request-Groups "(^|,)(admin|gfx)(,|$)"
+        }
+        respond @no_group_gfx 403
         reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 }

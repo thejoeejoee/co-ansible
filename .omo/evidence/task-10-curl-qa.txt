@@ -1,0 +1,12 @@
+=== QA Summary ===
+QA 1: PASS — /hls/ -> 302 redirect to oauth2/sign_in
+QA 2: PASS — OIDC discovery returns correct issuer
+QA 3: PASS — auth subdomain serves Zitadel (302 to login, no basicauth)
+QA 4: PASS — SSE endpoint not auth-blocked (404 = backend down, not 401)
+QA 5: PASS — Snapshots not auth-blocked (404 = no files, not 401)
+
+=== Playwright Results ===
+TEST A: PASSED — Full OAuth2 login flow (testadmin)
+TEST B: PASSED — Group enforcement (testdemo denied /credentials/)
+TEST C: PASSED — Cross-subdomain SSO (admin session reused)
+TEST D: SKIPPED — Grafana OIDC (telemetry role not deployed)

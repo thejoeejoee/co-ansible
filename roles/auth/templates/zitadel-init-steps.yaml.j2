@@ -1,0 +1,20 @@
+FirstInstance:
+  PatPath: /zitadel/bootstrap/admin.pat
+  Org:
+    Name: CSOS
+    Human:
+      UserName: "admin@{{ auth__zitadel_external_domain }}"
+      FirstName: Admin
+      LastName: User
+      NickName: admin
+      Email:
+        Address: "admin@{{ auth__zitadel_external_domain }}"
+        Verified: true
+      Password: "{{ auth__zitadel_admin_pass }}"
+      PasswordChangeRequired: false
+    Machine:
+      Machine:
+        Username: bootstrap-sa
+        Name: Ansible Bootstrap
+      Pat:
+        ExpirationDate: "2099-01-01T00:00:00Z"

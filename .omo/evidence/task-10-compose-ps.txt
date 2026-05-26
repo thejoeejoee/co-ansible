@@ -1,0 +1,5 @@
+NAME                   IMAGE                                  COMMAND                  SERVICE         CREATED         STATUS                   PORTS
+auth-oauth2-proxy-1    quay.io/oauth2-proxy/oauth2-proxy:v7   "/bin/oauth2-proxy -…"   oauth2-proxy    2 minutes ago   Up 29 seconds            127.0.0.1:4180->4180/tcp
+auth-postgres-1        postgres:16-alpine                     "docker-entrypoint.s…"   postgres        2 minutes ago   Up 2 minutes (healthy)   5432/tcp
+auth-zitadel-api-1     ghcr.io/zitadel/zitadel:latest         "/app/zitadel start-…"   zitadel-api     2 minutes ago   Up About a minute        127.0.0.1:8080->8080/tcp
+auth-zitadel-login-1   ghcr.io/zitadel/zitadel:latest         "/app/zitadel start-…"   zitadel-login   2 minutes ago   Up About a minute        127.0.0.1:8081->8080/tcp

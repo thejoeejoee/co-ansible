@@ -1,0 +1,42 @@
+- changed_files:
+  - roles/auth/tasks/main.yml
+  - roles/auth/tasks/bootstrap.yml
+  - roles/auth/handlers/main.yml
+- task_order:
+  - Prepare auth directories
+  - Render docker-compose.yml
+  - Deploy zitadel-config.yaml
+  - Deploy zitadel-init-steps.yaml
+  - Render oauth2-proxy.cfg
+  - Start auth services via docker_compose_v2
+  - Include bootstrap.yml when ansible_local.auth_credentials is undefined
+  - Load credentials from local facts when ansible_local.auth_credentials is defined
+  - Deploy credentials HTML
+  - Deploy demo HTML
+- bootstrap_summary:
+    wait_for_oidc_endpoint: true
+    pat_source: "{{ auth__home_dir }}/bootstrap/admin.pat"
+    project: CSOS
+    oidc_apps:
+      - oauth2-proxy
+      - grafana
+    project_roles:
+      - admin
+      - production
+      - gfx
+      - demo
+    identity_provider: Google
+    test_users_guard: auth__provision_test_users | default(false)
+    local_fact_file: /etc/ansible/facts.d/auth_credentials.fact
+    runtime_overrides:
+      - auth__oauth2_proxy_client_id
+      - auth__oauth2_proxy_client_secret
+      - auth__grafana_oidc_client_id
+      - auth__grafana_oidc_client_secret
+    post_bootstrap_actions:
+      - re-render oauth2-proxy.cfg
+      - notify Restart oauth2-proxy
+      - flush handlers
+- verification:
+    syntax_check: ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --syntax-check
+    note: YAML LSP unavailable locally because yaml-language-server is not installed

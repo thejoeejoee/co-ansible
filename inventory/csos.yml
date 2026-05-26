@@ -5,3 +5,19 @@ csos:
   vars:
     ansible_user: root
     web_proxy__domain: csos.josefkolar.cz
+    auth__domain: "{{ vault_auth__domain }}"
+    auth__cookie_domain: "{{ vault_auth__cookie_domain }}"
+    auth__zitadel_external_domain: "{{ vault_auth__zitadel_external_domain }}"
+    auth__zitadel_external_port: "{{ vault_auth__zitadel_external_port }}"
+    auth__postgres_password: "{{ vault_auth__postgres_password }}"
+    auth__zitadel_masterkey: "{{ vault_auth__zitadel_masterkey }}"
+    auth__zitadel_admin_pass: "{{ vault_auth__zitadel_admin_pass }}"
+    auth__oauth2_proxy_client_id: "{{ vault_auth__oauth2_proxy_client_id }}"
+    auth__oauth2_proxy_client_secret: "{{ vault_auth__oauth2_proxy_client_secret }}"
+    auth__oauth2_proxy_cookie_secret: "{{ vault_auth__oauth2_proxy_cookie_secret }}"
+    auth__google_client_id: "{{ vault_auth__google_client_id }}"
+    auth__google_client_secret: "{{ vault_auth__google_client_secret }}"
+    credentials:
+      demo_write:
+        user: "{{ vault_credentials__demo_write_user }}"
+        pass: "{{ vault_credentials__demo_write_pass }}"

@@ -34,10 +34,22 @@
             admin_password: "{{ credentials.telemetry[0].pass }}"
           auth:
             ldap: {enabled: false}
-            disable_login_form: true
+            disable_login_form: false
           auth.anonymous:
+            enabled: false
+          auth.generic_oauth:
             enabled: true
-            org_role: Viewer
+            name: Zitadel
+            client_id: "{{ auth__grafana_oidc_client_id }}"
+            client_secret: "{{ auth__grafana_oidc_client_secret }}"
+            auth_url: "https://{{ auth__domain }}/oauth/v2/authorize"
+            token_url: "https://{{ auth__domain }}/oauth/v2/token"
+            api_url: "https://{{ auth__domain }}/oidc/v1/userinfo"
+            scopes: "openid profile email"
+            role_attribute_path: "contains(flat_roles[*], 'admin') && 'GrafanaAdmin' || contains(flat_roles[*], 'production') && 'Viewer' || 'none'"
+            role_attribute_strict: true
+            auto_login: true
+            allow_sign_up: true
           database:
             type: sqlite3
             path: grafana.db
@@ -106,6 +118,7 @@
         status_code: [200]
       no_log: true
       when: _grafana_set_user.status != 200
+      failed_when: false
   become: true
 
 - name: Deploy custom dashboards

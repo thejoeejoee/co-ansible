@@ -1,0 +1,25 @@
+[WARNING]: Host 'csos@orb' is using the discovered Python interpreter at '/usr/bin/python3.13', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.20/reference_appendices/interpreter_discovery.html for more information.
+csos@orb | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.13"
+    },
+    "changed": true,
+    "checksum": "3c840883a5788ef24d2dbbf42231209e50938609",
+    "dest": "/tmp/zitadel-config-test.yaml",
+    "gid": 502,
+    "group": "josef_kolar",
+    "md5sum": "ed9827f2e8e8827ca6e5da2bc7c20a21",
+    "mode": "0644",
+    "owner": "josef_kolar",
+    "size": 422,
+    "src": "~csos/.ansible/tmp/ansible-tmp-1779799682.095694-85765-29625062076434/.source.yaml",
+    "state": "file",
+    "uid": 502
+}
+EXIT: 0
+grep: auth.csos.orb.local: No such file or directory
+/tmp/zitadel-config-test.yaml:ExternalDomain: "auth.csos.orb.local"
+grep: 443: No such file or directory
+/tmp/zitadel-config-test.yaml:ExternalPort: 443
+0
+0 raw tags
