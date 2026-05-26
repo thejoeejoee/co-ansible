@@ -78,6 +78,25 @@
       - _project_org_id | length > 0
     fail_msg: Failed to resolve CSOS project metadata from Zitadel API
 
+- name: Enable projectRoleAssertion on CSOS project
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}"
+    method: PUT
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      name: CSOS
+      projectRoleAssertion: true
+      projectRoleCheck: false
+      hasProjectCheck: false
+      privateLabelingSetting: PRIVATE_LABELING_SETTING_UNSPECIFIED
+    validate_certs: false
+    status_code: [200]
+  no_log: true
+
 - name: Create oauth2-proxy OIDC app
   ansible.builtin.uri:
     url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/apps/oidc"
@@ -173,6 +192,89 @@
     - { key: demo, display_name: Demo }
   loop_control:
     label: "{{ item.key }}"
+  no_log: true
+
+- name: Create flatRoles action for token enrichment
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/actions"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      name: flatRoles
+      script: |
+        function flatRoles(ctx, api) {
+          if (ctx.v1.user.grants === undefined || ctx.v1.user.grants.count === 0) {
+            return;
+          }
+          var roles = [];
+          ctx.v1.user.grants.grants.forEach(function(grant) {
+            grant.roles.forEach(function(role) {
+              if (roles.indexOf(role) === -1) {
+                roles.push(role);
+              }
+            });
+          });
+          if (roles.length > 0) {
+            api.v1.claims.setClaim("flat_roles", roles);
+          }
+        }
+      timeout: "10s"
+      allowedToFail: true
+    validate_certs: false
+    status_code: [200, 201, 409]
+  register: _flat_roles_action
+  no_log: true
+
+- name: Search existing flatRoles action
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/actions/_search"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      queries:
+        - actionNameQuery:
+            name: flatRoles
+            method: TEXT_QUERY_METHOD_EQUALS
+    validate_certs: false
+    status_code: 200
+  register: _flat_roles_search
+  when: _flat_roles_action.status == 409
+  no_log: true
+
+- name: Set flatRoles action ID
+  ansible.builtin.set_fact:
+    _flat_roles_action_id: >-
+      {{
+        _flat_roles_action.json.id
+        if _flat_roles_action.status in [200, 201]
+        else _flat_roles_search.json.result[0].id
+      }}
+
+- name: Set flatRoles action on complement token flow triggers
+  ansible.builtin.uri:
+    url: "https://{{ auth__domain }}/management/v1/flows/2/trigger/{{ item }}"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ _auth_pat }}"
+      Content-Type: application/json
+      Accept: application/json
+    body_format: json
+    body:
+      actionIds:
+        - "{{ _flat_roles_action_id }}"
+    validate_certs: false
+    status_code: [200, 400]
+  loop:
+    - 4  # Pre Userinfo Creation
+    - 5  # Pre Access Token Creation
   no_log: true
 
 - name: Configure Google identity provider
@@ -299,64 +401,6 @@
           - _test_users.testdemo.id | length > 0
         fail_msg: Failed to resolve test user IDs from Zitadel API
 
-    - name: Create project grant for test users
-      ansible.builtin.uri:
-        url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/grants"
-        method: POST
-        headers:
-          Authorization: "Bearer {{ _auth_pat }}"
-          Content-Type: application/json
-          Accept: application/json
-        body_format: json
-        body:
-          grantedOrgId: "{{ _project_org_id }}"
-          roleKeys:
-            - admin
-            - demo
-        validate_certs: false
-        status_code: [200, 201, 409]
-      register: _project_grants
-      no_log: true
-
-    - name: Search project grants for test users
-      ansible.builtin.uri:
-        url: "https://{{ auth__domain }}/management/v1/projects/{{ _project_id }}/grants/_search"
-        method: POST
-        headers:
-          Authorization: "Bearer {{ _auth_pat }}"
-          Content-Type: application/json
-          Accept: application/json
-        body_format: json
-        body:
-          queries:
-            - projectIdQuery:
-                projectId: "{{ _project_id }}"
-            - grantedOrgIdQuery:
-                grantedOrgId: "{{ _project_org_id }}"
-        validate_certs: false
-        status_code: 200
-      register: _project_grants_search
-      no_log: true
-
-    - name: Select shared project grant for test users
-      ansible.builtin.set_fact:
-        _project_grant_id: "{{ item.grantId }}"
-      loop: "{{ _project_grants_search.json.result | default([]) }}"
-      when:
-        - item.grantedRoleKeys is defined
-        - "'admin' in item.grantedRoleKeys"
-        - "'demo' in item.grantedRoleKeys"
-      loop_control:
-        label: "{{ item.grantId }}"
-      no_log: true
-
-    - name: Fail when shared project grant is missing
-      ansible.builtin.assert:
-        that:
-          - _project_grant_id is defined
-          - _project_grant_id | length > 0
-        fail_msg: Failed to resolve shared project grant for test users
-
     - name: Grant project roles to test users
       ansible.builtin.uri:
         url: "https://{{ auth__domain }}/management/v1/users/{{ item.value.id }}/grants"
@@ -368,7 +412,6 @@
         body_format: json
         body:
           projectId: "{{ _project_id }}"
-          projectGrantId: "{{ _project_grant_id }}"
           roleKeys:
             - "{{ item.value.role }}"
         validate_certs: false
@@ -412,7 +455,7 @@
   ansible.builtin.template:
     src: oauth2-proxy.cfg.j2
     dest: "{{ auth__home_dir }}/oauth2-proxy.cfg"
-    mode: '0600'
+    mode: '0644'
   become: true
   notify: Restart oauth2-proxy
 
