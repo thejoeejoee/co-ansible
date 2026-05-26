@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: "{{ auth__postgres_password }}"
+      POSTGRES_USER: zitadel
+      POSTGRES_DB: zitadel
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zitadel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zitadel-api:
+    image: ghcr.io/zitadel/zitadel:latest
+    command: start-from-init --masterkey "{{ auth__zitadel_masterkey }}" --tlsMode external
+    environment:
+      ZITADEL_DATABASE_POSTGRES_HOST: postgres
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: "{{ auth__postgres_password }}"
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: "{{ auth__postgres_password }}"
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALDOMAIN: "{{ auth__zitadel_external_domain }}"
+      ZITADEL_EXTERNALPORT: "{{ auth__zitadel_external_port }}"
+      ZITADEL_EXTERNALSECURE: "true"
+    volumes:
+      - "{{ auth__home_dir }}/bootstrap:/zitadel/bootstrap"
+    ports:
+      - "127.0.0.1:{{ auth__zitadel_port }}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  zitadel-login:
+    image: ghcr.io/zitadel/zitadel:latest
+    command: start-from-init --masterkey "{{ auth__zitadel_masterkey }}" --tlsMode external
+    environment:
+      ZITADEL_DATABASE_POSTGRES_HOST: postgres
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: "{{ auth__postgres_password }}"
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: "{{ auth__postgres_password }}"
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALDOMAIN: "{{ auth__zitadel_external_domain }}"
+      ZITADEL_EXTERNALPORT: "{{ auth__zitadel_external_port }}"
+      ZITADEL_EXTERNALSECURE: "true"
+    volumes:
+      - "{{ auth__home_dir }}/bootstrap:/zitadel/bootstrap"
+    ports:
+      - "127.0.0.1:{{ auth__zitadel_login_port }}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7
+    command: >
+      --provider=oidc
+      --oidc-issuer-url=https://{{ auth__zitadel_external_domain }}
+      --client-id={{ auth__oauth2_proxy_client_id }}
+      --client-secret={{ auth__oauth2_proxy_client_secret }}
+      --cookie-secret={{ auth__oauth2_proxy_cookie_secret }}
+      --cookie-domain=.{{ web_proxy__domain }}
+      --cookie-secure=true
+      --upstream=file:///dev/null
+      --http-address=0.0.0.0:4180
+      --redirect-url=https://{{ web_proxy__domain }}/oauth2/callback
+      --email-domain=*
+      --skip-provider-button=true
+      --set-xauthrequest=true
+      --pass-access-token=false
+    ports:
+      - "127.0.0.1:{{ auth__oauth2_proxy_port }}:4180"
+    depends_on:
+      - zitadel-api
+
+volumes:
+  postgres_data:

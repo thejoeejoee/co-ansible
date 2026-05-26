@@ -11,6 +11,9 @@ csos:
         - { user: demo, pass: omed }
       stream_read:
         - { user: vmix, pass: changeme }
+      demo_write:
+        user: demostream
+        pass: demostream123
       telemetry:
         - { user: admin, pass: changeme }
       gfx:
@@ -23,3 +26,15 @@ csos:
 
     web_proxy__domain: csos.orb.local
     web_proxy__disable_tls: true
+    auth__domain: auth.csos.orb.local
+    auth__cookie_domain: .csos.orb.local
+    auth__zitadel_external_domain: auth.csos.orb.local
+    auth__zitadel_external_port: 443
+    auth__postgres_password: devpassword
+    auth__zitadel_masterkey: dev-masterkey-32chars-padded00
+    auth__oauth2_proxy_client_id: placeholder-client-id
+    auth__oauth2_proxy_client_secret: placeholder-client-secret
+    auth__oauth2_proxy_cookie_secret: ZGV2LWNvb2tpZS1zZWNyZXQtMzItYnl0ZXMh
+    auth__google_client_id: placeholder-google-client-id
+    auth__google_client_secret: placeholder-google-client-secret
+    auth__provision_test_users: true
