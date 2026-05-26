@@ -18,3 +18,31 @@
     project_src: "{{ auth__home_dir }}/"
     files:
       - docker-compose.yml
+
+- name: Prepare /var/www/credentials directory
+  ansible.builtin.file:
+    path: /var/www/credentials
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Deploy credentials dashboard
+  ansible.builtin.template:
+    src: credentials.html.j2
+    dest: /var/www/credentials/index.html
+    mode: '0644'
+  become: true
+
+- name: Prepare /var/www/demo directory
+  ansible.builtin.file:
+    path: /var/www/demo
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Deploy demo page
+  ansible.builtin.template:
+    src: demo.html.j2
+    dest: /var/www/demo/index.html
+    mode: '0644'
+  become: true

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demo Stream</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+        h1, h2 { margin-bottom: 1rem; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 1rem; }
+        .field { margin: .75rem 0; }
+        .field label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .25rem; }
+        .row { display: flex; gap: .5rem; }
+        input { flex: 1; min-width: 0; padding: .45rem .55rem; font: inherit; font-size: .85rem; border: 1px solid #ccc; border-radius: 4px; color: #333; background: #f8f8f8; }
+        button { padding: .45rem .7rem; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; white-space: nowrap; }
+        button:hover { background: #f3f3f3; }
+        video { width: 100%; background: #000; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Demo Stream</h1>
+
+    <section class="card">
+        <h2>Publish credentials (demo slot only)</h2>
+
+        <div class="field">
+            <label>RTMP</label>
+            <div class="row">
+                <input readonly value="rtmp://{{ web_proxy__domain }}:1935/x/demo?user={{ credentials.demo_write.user }}&pass={{ credentials.demo_write.pass }}">
+                <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.value)">📋 Copy</button>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>SRT</label>
+            <div class="row">
+                <input readonly value="srt://{{ web_proxy__domain }}:8890?streamid=publish:x/demo:{{ credentials.demo_write.user }}:{{ credentials.demo_write.pass }}">
+                <button type="button" onclick="navigator.clipboard.writeText(this.previousElementSibling.value)">📋 Copy</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Live preview</h2>
+        <video id="video" controls></video>
+    </section>
+
+    <script>
+    var src = 'https://{{ web_proxy__domain }}/hls/x/demo/index.m3u8';
+    var video = document.getElementById('video');
+    if (Hls.isSupported()) {
+      var hls = new Hls();
+      hls.loadSource(src);
+      hls.attachMedia(video);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = src;
+    }
+    </script>
+</body>
+</html>
