@@ -21,6 +21,13 @@
     mode: '0644'
   become: true
 
+- name: Deploy Zitadel healthcheck config
+  ansible.builtin.template:
+    src: zitadel-healthcheck.yaml.j2
+    dest: "{{ auth__home_dir }}/zitadel-healthcheck.yaml"
+    mode: '0644'
+  become: true
+
 - name: Deploy Zitadel init steps
   ansible.builtin.template:
     src: zitadel-init-steps.yaml.j2
