@@ -35,6 +35,12 @@ services:
       - "{{ auth__home_dir }}/zitadel-init-steps.yaml:/zitadel/steps.yaml:ro"
     ports:
       - "127.0.0.1:{{ auth__zitadel_port }}:8080"
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,7 +68,7 @@ services:
     ports:
       - "127.0.0.1:{{ auth__zitadel_login_port }}:8080"
     depends_on:
-      postgres:
+      zitadel-api:
         condition: service_healthy
 
   oauth2-proxy:
