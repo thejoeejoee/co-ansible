@@ -1,0 +1,7 @@
+auth__home_dir: /opt/auth
+auth__zitadel_port: 8080
+auth__zitadel_login_port: 8081
+auth__oauth2_proxy_port: 4180
+auth__zitadel_external_port: 443
+
+# auth__zitadel_masterkey must be exactly 32 chars; provide via inventory.
