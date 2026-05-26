@@ -94,6 +94,20 @@ authInternalUsers:
     path: restream
 
 {% endfor %}
+{% if credentials.demo_write is defined %}
+- user: "{{ credentials.demo_write.user }}"
+  pass: "{{ credentials.demo_write.pass }}"
+  permissions:
+  - action: publish
+    path: demo
+  - action: publish
+    path: x/demo
+  - action: read
+    path: demo
+  - action: read
+    path: x/demo
+
+{% endif %}
 - user: any
   pass:
   ips: ['127.0.0.1', '::1']
