@@ -49,6 +49,7 @@
     project_src: "{{ auth__home_dir }}/"
     files:
       - docker-compose.yml
+  become: true
 
 - name: Bootstrap Zitadel (first run only)
   ansible.builtin.include_tasks: bootstrap.yml

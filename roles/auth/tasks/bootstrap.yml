@@ -431,7 +431,7 @@
 - name: Persist auth credentials as local facts
   ansible.builtin.copy:
     dest: /etc/ansible/facts.d/auth_credentials.fact
-    mode: '0600'
+    mode: '0644'
     content: |
       [oauth2_proxy]
       client_id={{ _oauth2_proxy_client_id }}
