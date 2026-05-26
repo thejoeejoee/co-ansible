@@ -27,7 +27,7 @@ ansible-playbook -i inventory/csos.yml playbooks/setup.yml --tags gfx,web_proxy 
 
 Nuxt frontend (GitHub Pages): https://thejoeejoee.github.io/co-stream-gfx/?sse=https://gfx.csos.josefkolar.cz/_sse/default
 
-Flask control panel: https://gfx.csos.josefkolar.cz/ (basic_auth required)
+Flask control panel: https://gfx.csos.josefkolar.cz/ (SSO required, gfx group)
 
 ## Post-deploy
 
