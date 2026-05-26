@@ -6,6 +6,10 @@
       import_role:
         name: ../roles/base
 
+    - tags: [auth]
+      import_role:
+        name: ../roles/auth
+
     - tags: [stream_proxy]
       import_role:
         name: ../roles/stream_proxy
