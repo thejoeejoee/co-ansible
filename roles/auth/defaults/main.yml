@@ -3,6 +3,7 @@ auth__zitadel_port: 8080
 auth__zitadel_login_port: 8081
 auth__oauth2_proxy_port: 4180
 auth__zitadel_external_port: 443
+auth__zitadel_image: ghcr.io/zitadel/zitadel:v2.63.5
 
 # auth__zitadel_masterkey must be exactly 32 chars; provide via inventory.
 auth__zitadel_admin_pass: changeme-in-inventory
