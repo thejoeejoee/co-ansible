@@ -11,6 +11,7 @@ csos:
     auth__zitadel_external_port: "{{ vault_auth__zitadel_external_port }}"
     auth__postgres_password: "{{ vault_auth__postgres_password }}"
     auth__zitadel_masterkey: "{{ vault_auth__zitadel_masterkey }}"
+    auth__zitadel_admin_pass: "{{ vault_auth__zitadel_admin_pass }}"
     auth__oauth2_proxy_client_id: "{{ vault_auth__oauth2_proxy_client_id }}"
     auth__oauth2_proxy_client_secret: "{{ vault_auth__oauth2_proxy_client_secret }}"
     auth__oauth2_proxy_cookie_secret: "{{ vault_auth__oauth2_proxy_cookie_secret }}"
