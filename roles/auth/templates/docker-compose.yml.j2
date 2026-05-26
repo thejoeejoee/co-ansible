@@ -33,10 +33,11 @@ services:
       - "{{ auth__home_dir }}/bootstrap:/zitadel/bootstrap"
       - "{{ auth__home_dir }}/zitadel-config.yaml:/zitadel/config.yaml:ro"
       - "{{ auth__home_dir }}/zitadel-init-steps.yaml:/zitadel/steps.yaml:ro"
+      - "{{ auth__home_dir }}/zitadel-healthcheck.yaml:/zitadel/healthcheck.yaml:ro"
     ports:
       - "127.0.0.1:{{ auth__zitadel_port }}:8080"
     healthcheck:
-      test: ["CMD", "/app/zitadel", "ready", "--insecure"]
+      test: ["CMD", "/app/zitadel", "ready", "--config", "/zitadel/healthcheck.yaml"]
       interval: 10s
       timeout: 5s
       retries: 30
