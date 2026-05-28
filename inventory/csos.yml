@@ -11,4 +11,5 @@ csos:
     srtla__stats_port: 8088
     srtla__mgnt_port: 3001
     srtla__srtla_port: 5000
+    srtla__exporter_port: 7979
     # srtla__slots: defined in csos.enc vault (add with real publish_key values before prod deploy)
