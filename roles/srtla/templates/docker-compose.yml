@@ -1,0 +1,40 @@
+services:
+  srtla-receiver:
+    image: ghcr.io/openirl/srtla-receiver:latest
+    # no tagged releases — latest is the only available tag
+    ports:
+      - "0.0.0.0:{{ srtla__srtla_port }}:5000/udp"
+      - "0.0.0.0:{{ srtla__sender_port }}:4001/udp"
+      - "127.0.0.1:{{ srtla__player_port }}:4000/udp"
+      - "127.0.0.1:{{ srtla__stats_port }}:8080/tcp"
+    env_file:
+      - .env
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    volumes:
+      - srtla_data:/var/lib/sls
+    restart: unless-stopped
+
+  # Disabled — kept for reference, enable with: docker compose --profile ui up -d
+  sls-management-ui:
+    image: ghcr.io/openirl/sls-management-ui:latest
+    profiles: ["ui"]
+    ports:
+      - "127.0.0.1:{{ srtla__mgnt_port }}:3000/tcp"
+    environment:
+      - REACT_APP_BASE_URL=https://srtla.{{ web_proxy__domain }}
+    restart: unless-stopped
+
+  json-exporter:
+    image: quay.io/prometheuscommunity/json-exporter:latest
+    ports:
+      - "127.0.0.1:{{ srtla__exporter_port }}:7979/tcp"
+    volumes:
+      - ./json_exporter.yml:/config.yml:ro
+    command: ["--config.file=/config.yml"]
+    restart: unless-stopped
+
+volumes:
+  srtla_data:

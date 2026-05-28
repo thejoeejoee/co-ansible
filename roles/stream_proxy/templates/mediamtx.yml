@@ -15,6 +15,7 @@ hlsAddress: localhost:8888
 webrtc: true
 webrtcAddress: localhost:8889
 webrtcLocalUDPAddress: 0.0.0.0:8189
+webrtcAdditionalHosts: [{{ web_proxy__domain }}]
 
 # downstream feeds
 srt: true
@@ -22,6 +23,9 @@ srtAddress: 0.0.0.0:8890
 
 # if needed, check all the needed ports with ufw
 rtsp: no
+
+api: yes
+apiAddress: 127.0.0.1:9997
 
 metrics: yes
 metricsAddress: localhost:9998
@@ -67,6 +71,13 @@ paths:
   restream:
     runOnReady: /etc/mediamtx/restream.sh
     runOnReadyRestart: yes
+
+{% for slot in srtla__slots %}
+  srtla/{{ slot.name }}:
+    source: srt://127.0.0.1:{{ srtla__player_port }}?streamid={{ slot.name }}
+    sourceOnDemand: yes
+  x/srtla/{{ slot.name }}: {}
+{% endfor %}
 
 authInternalUsers:
 {% for cred in credentials.stream_write %}

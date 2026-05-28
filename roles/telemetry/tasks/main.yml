@@ -16,6 +16,20 @@
           - job_name: caddy
             static_configs:
               - targets: [localhost:2019]
+          - job_name: srtla
+            metrics_path: /probe
+            params:
+              module: [default]
+            static_configs:
+              - targets: "{{ srtla__slots | map(attribute='name') | map('regex_replace', '^(.*)$', 'http://srtla-receiver:8080/stats/\\1?legacy=1') | list }}"
+            relabel_configs:
+              - source_labels: [__address__]
+                target_label: __param_target
+              - source_labels: [__address__]
+                regex: '.*/stats/([^?]+).*'
+                target_label: slot
+              - target_label: __address__
+                replacement: "localhost:{{ srtla__exporter_port }}"
   become: true
 
 - name: Install Grafana

@@ -1,0 +1,108 @@
+---
+- name: Prepare /home/srtla/ directory
+  become: true
+  file:
+    path: /home/srtla
+    state: directory
+    mode: '0755'
+
+- name: Deploy srtla env file
+  become: true
+  template:
+    src: env.j2
+    dest: /home/srtla/.env
+    mode: '0600'
+
+- name: Deploy docker-compose
+  become: true
+  template:
+    src: docker-compose.yml
+    dest: /home/srtla/docker-compose.yml
+    mode: '0644'
+
+- name: Deploy json_exporter config
+  become: true
+  template:
+    src: json_exporter.yml
+    dest: /home/srtla/json_exporter.yml
+    mode: '0644'
+
+- name: Create and start srtla services
+  become: true
+  community.docker.docker_compose_v2:
+    project_src: /home/srtla/
+    files:
+      - docker-compose.yml
+
+- name: Fix sls data volume ownership (sls user inside container)
+  become: true
+  ansible.builtin.shell: |
+    docker exec srtla-srtla-receiver-1 chown sls:sls /var/lib/sls
+  changed_when: false
+
+- name: Restart srtla-receiver to pick up writable data dir
+  become: true
+  ansible.builtin.shell: |
+    docker restart srtla-srtla-receiver-1
+  changed_when: false
+
+- name: Wait for srtla stats API port to be ready
+  become: true
+  wait_for:
+    host: 127.0.0.1
+    port: "{{ srtla__stats_port }}"
+    delay: 2
+    timeout: 60
+
+- name: Extract API key from container logs
+  become: true
+  ansible.builtin.shell: |
+    docker logs srtla-srtla-receiver-1 2>&1 | grep -oP '(?<=Generated default admin API key: )\S+' | tail -1
+  register: extracted_apikey
+  changed_when: false
+
+- name: Save API key to /home/srtla/.apikey
+  become: true
+  ansible.builtin.copy:
+    content: "{{ extracted_apikey.stdout }}"
+    dest: /home/srtla/.apikey
+    mode: '0600'
+  when: (extracted_apikey.stdout | default('')) | length > 0
+
+- name: Read API key
+  become: true
+  ansible.builtin.slurp:
+    src: /home/srtla/.apikey
+  register: apikey_b64
+
+- name: Set API key fact
+  ansible.builtin.set_fact:
+    srtla__apikey: "{{ apikey_b64['content'] | b64decode | trim }}"
+
+- name: Provision srtla stream slots
+  become: true
+  ansible.builtin.shell: |
+    curl -s -o /dev/null -w "%{http_code}" \
+      -X POST \
+      -H "Authorization: Bearer {{ srtla__apikey }}" \
+      -H "Content-Type: application/json" \
+      -d '{"publisher": "{{ item.publish_key }}", "player": "{{ item.name }}"}' \
+      http://127.0.0.1:{{ srtla__stats_port }}/api/stream-ids
+  loop: "{{ srtla__slots }}"
+  register: provision_result
+  changed_when: provision_result.stdout == "200"
+  failed_when: provision_result.stdout not in ["200", "409"]
+
+- name: UFW allow SRTLA ingest
+  become: true
+  ufw:
+    rule: allow
+    port: "{{ srtla__srtla_port }}"
+    proto: udp
+
+- name: UFW allow SRT sender
+  become: true
+  ufw:
+    rule: allow
+    port: "{{ srtla__sender_port }}"
+    proto: udp
