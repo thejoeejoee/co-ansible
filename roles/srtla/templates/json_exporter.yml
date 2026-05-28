@@ -1,0 +1,58 @@
+---
+modules:
+  default:
+    metrics:
+      - name: srtla_publisher_bitrate_kbps
+        path: '{ .publishers.live.bitrate }'
+        help: 'Publisher bitrate in kbps'
+        type: value
+
+      - name: srtla_publisher_rtt_ms
+        path: '{ .publishers.live.rtt }'
+        help: 'Publisher round-trip time in ms'
+        type: value
+
+      - name: srtla_publisher_pkt_recv_drop
+        path: '{ .publishers.live.pktRcvDrop }'
+        help: 'Publisher received packets dropped'
+        type: value
+
+      - name: srtla_publisher_pkt_recv_loss
+        path: '{ .publishers.live.pktRcvLoss }'
+        help: 'Publisher received packets lost'
+        type: value
+
+      - name: srtla_publisher_bytes_recv_drop
+        path: '{ .publishers.live.bytesRcvDrop }'
+        help: 'Publisher received bytes dropped'
+        type: value
+
+      - name: srtla_publisher_bytes_recv_loss
+        path: '{ .publishers.live.bytesRcvLoss }'
+        help: 'Publisher received bytes lost'
+        type: value
+
+      - name: srtla_publisher_bandwidth_mbps
+        path: '{ .publishers.live.mbpsBandwidth }'
+        help: 'Publisher available bandwidth in Mbps'
+        type: value
+
+      - name: srtla_publisher_recv_rate_mbps
+        path: '{ .publishers.live.mbpsRecvRate }'
+        help: 'Publisher receive rate in Mbps'
+        type: value
+
+      - name: srtla_publisher_buffer_ms
+        path: '{ .publishers.live.msRcvBuf }'
+        help: 'Publisher receive buffer in ms'
+        type: value
+
+      - name: srtla_publisher_latency_ms
+        path: '{ .publishers.live.latency }'
+        help: 'Publisher configured latency in ms'
+        type: value
+
+      - name: srtla_publisher_uptime_seconds
+        path: '{ .publishers.live.uptime }'
+        help: 'Publisher uptime in seconds'
+        type: value

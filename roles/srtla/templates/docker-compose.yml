@@ -17,13 +17,23 @@ services:
       - srtla_data:/var/lib/sls
     restart: unless-stopped
 
+  # Disabled — kept for reference, enable with: docker compose --profile ui up -d
   sls-management-ui:
     image: ghcr.io/openirl/sls-management-ui:latest
-    # no tagged releases — latest is the only available tag
+    profiles: ["ui"]
     ports:
       - "127.0.0.1:{{ srtla__mgnt_port }}:3000/tcp"
     environment:
-      - APP_URL=http://srtla-receiver:8080
+      - REACT_APP_BASE_URL=https://srtla.{{ web_proxy__domain }}
+    restart: unless-stopped
+
+  json-exporter:
+    image: quay.io/prometheuscommunity/json-exporter:latest
+    ports:
+      - "127.0.0.1:{{ srtla__exporter_port }}:7979/tcp"
+    volumes:
+      - ./json_exporter.yml:/config.yml:ro
+    command: ["--config.file=/config.yml"]
     restart: unless-stopped
 
 volumes:

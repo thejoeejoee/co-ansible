@@ -20,6 +20,13 @@
     dest: /home/srtla/docker-compose.yml
     mode: '0644'
 
+- name: Deploy json_exporter config
+  become: true
+  template:
+    src: json_exporter.yml
+    dest: /home/srtla/json_exporter.yml
+    mode: '0644'
+
 - name: Create and start srtla services
   become: true
   community.docker.docker_compose_v2:

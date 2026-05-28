@@ -12,7 +12,11 @@ http://localhost:2019 {
 {% if web_proxy__disable_tls | default(false) %}
     tls internal
 {% endif %}
-    @telemetry path /prometheus/* /grafana/*
+    @telemetry path /prometheus/* /grafana/* /api/*
+
+    handle_path /api/* {
+        reverse_proxy localhost:9997
+    }
 
     handle_path /hls/* {
         reverse_proxy {
@@ -72,6 +76,7 @@ http://localhost:2019 {
                 <li><a href="/grafana/">Grafana</a> <small>— monitoring dashboards</small></li>
                 <li><a href="/prometheus/">Prometheus</a> <small>— metrics</small></li>
                 <li><a href="/hls/">HLS player</a> <small>— stream playback</small></li>
+                <li><a href="/webrtc/">WebRTC player</a> <small>— low-latency playback</small></li>
                 <li><a href="https://gfx.{{ web_proxy__domain }}/">GFX Control</a> <small>— graphics control panel</small></li>
                 <li><a href="{{ gfx__github_pages_url }}">GFX Overlay</a> <small>— stream overlay (GitHub Pages)</small></li>
                 <li><a href="https://srtla.{{ web_proxy__domain }}/">SRTLA Management</a> <small>— stream slot management</small></li>
@@ -107,8 +112,14 @@ srtla.{{ web_proxy__domain }} {
         reverse_proxy localhost:{{ srtla__stats_port }}
     }
 
+    handle /api/* {
+        reverse_proxy localhost:{{ srtla__stats_port }}
+    }
+
     handle {
-        reverse_proxy localhost:{{ srtla__mgnt_port }}
+        respond "SRTLA stats: <a href=\"/stats/\">/stats/</a>" 200 {
+            header Content-Type "text/html"
+        }
     }
 }
 
