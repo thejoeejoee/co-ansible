@@ -40,6 +40,7 @@ http://localhost:2019 {
 
         reverse_proxy https://cdn.oresults.eu {
             header_up Host cdn.oresults.eu
+            header_down -Access-Control-Allow-Origin
         }
     }
 
