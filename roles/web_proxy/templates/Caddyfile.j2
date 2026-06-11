@@ -28,11 +28,11 @@ http://localhost:2019 {
     }
     handle_path /oresults/* {
         @cors_preflight method OPTIONS
-        @localhost_origin header_regexp Origin ^http://localhost(:\d+)?$
-        header Access-Control-Allow-Origin "https://thejoeejoee.github.io"
-        header @localhost_origin Access-Control-Allow-Origin "{http.request.header.Origin}"
-        header Access-Control-Allow-Methods "GET, OPTIONS"
-        header Access-Control-Allow-Headers "Content-Type"
+        @allowed_origin header_regexp origin Origin ^(https://thejoeejoee\.github\.io|http://localhost(:\d+)?)$
+
+        header @allowed_origin Access-Control-Allow-Origin "{http.request.header.Origin}"
+        header @allowed_origin Access-Control-Allow-Methods "GET, OPTIONS"
+        header @allowed_origin Access-Control-Allow-Headers "Content-Type"
 
         handle @cors_preflight {
             respond 204
