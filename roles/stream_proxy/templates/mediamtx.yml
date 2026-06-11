@@ -20,6 +20,9 @@ webrtcLocalUDPAddress: 0.0.0.0:8189
 srt: true
 srtAddress: 0.0.0.0:8890
 
+srtla: yes
+srtlaAddress: 0.0.0.0:8891
+
 # if needed, check all the needed ports with ufw
 rtsp: no
 

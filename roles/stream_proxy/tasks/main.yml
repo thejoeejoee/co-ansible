@@ -1,20 +1,35 @@
 - name: Apply kernel/network tuning for streaming
   ansible.builtin.include_tasks: tuning.yml
 
-- name: Download mediamtx
-  become: true
-  unarchive:
-    src: https://github.com/bluenviron/mediamtx/releases/download/v1.17.0/mediamtx_v1.17.0_linux_amd64.tar.gz
-    dest: /tmp
-    remote_src: yes
+- name: Build mediamtx from fork (local cross-compile)
+  delegate_to: localhost
+  environment:
+    GOOS: linux
+    GOARCH: amd64
+    CGO_ENABLED: '0'
+  ansible.builtin.command:
+    cmd: go build -ldflags '-s -w' -o /tmp/mediamtx-linux-amd64 .
+    chdir: "{{ stream_proxy__mediamtx_src }}"
+    creates: /tmp/mediamtx-linux-amd64
+  register: mediamtx_build
+
+- name: Check local source commit
+  delegate_to: localhost
+  ansible.builtin.command:
+    cmd: git rev-parse HEAD
+    chdir: "{{ stream_proxy__mediamtx_src }}"
+  changed_when: false
+  register: mediamtx_local_commit
+  failed_when: mediamtx_local_commit.stdout != stream_proxy__mediamtx_commit
 
 - name: Install mediamtx
   become: true
-  copy:
-    remote_src: yes
-    src: /tmp/mediamtx
+  ansible.builtin.copy:
+    src: /tmp/mediamtx-linux-amd64
     dest: /usr/local/bin/mediamtx
     mode: '0755'
+  notify: Restart mediamtx
+
 
 - name: UFW allow RTMP
   become: true
@@ -28,6 +43,13 @@
   ufw:
     rule: allow
     port: 8890
+    proto: udp
+
+- name: UFW allow SRTLA
+  become: true
+  ufw:
+    rule: allow
+    port: 8891
     proto: udp
 
 - name: UFW allow WebRTC UDP
