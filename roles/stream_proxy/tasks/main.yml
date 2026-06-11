@@ -11,6 +11,13 @@
     force: true
   register: mediamtx_clone
 
+- name: Generate mediamtx embedded assets
+  delegate_to: localhost
+  ansible.builtin.command:
+    cmd: go generate ./...
+    chdir: /tmp/mediamtx-src
+  when: mediamtx_clone.changed
+
 - name: Build mediamtx from fork (local cross-compile)
   delegate_to: localhost
   environment:
