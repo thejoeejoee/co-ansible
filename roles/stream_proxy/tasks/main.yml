@@ -1,6 +1,16 @@
 - name: Apply kernel/network tuning for streaming
   ansible.builtin.include_tasks: tuning.yml
 
+- name: Clone mediamtx fork
+  delegate_to: localhost
+  ansible.builtin.git:
+    repo: "{{ stream_proxy__mediamtx_repo }}"
+    dest: /tmp/mediamtx-src
+    version: "{{ stream_proxy__mediamtx_commit }}"
+    depth: 1
+    force: true
+  register: mediamtx_clone
+
 - name: Build mediamtx from fork (local cross-compile)
   delegate_to: localhost
   environment:
@@ -9,18 +19,8 @@
     CGO_ENABLED: '0'
   ansible.builtin.command:
     cmd: go build -ldflags '-s -w' -o /tmp/mediamtx-linux-amd64 .
-    chdir: "{{ stream_proxy__mediamtx_src }}"
-    creates: /tmp/mediamtx-linux-amd64
-  register: mediamtx_build
-
-- name: Check local source commit
-  delegate_to: localhost
-  ansible.builtin.command:
-    cmd: git rev-parse HEAD
-    chdir: "{{ stream_proxy__mediamtx_src }}"
-  changed_when: false
-  register: mediamtx_local_commit
-  failed_when: mediamtx_local_commit.stdout != stream_proxy__mediamtx_commit
+    chdir: /tmp/mediamtx-src
+  when: mediamtx_clone.changed
 
 - name: Install mediamtx
   become: true

@@ -1,3 +1,3 @@
 # Path to local mediamtx source checkout (fork with SRTLA support)
-stream_proxy__mediamtx_src: "~/szn/mediamtx"
+stream_proxy__mediamtx_repo: "https://github.com/thejoeejoee/mediamtx.git"
 stream_proxy__mediamtx_commit: "d8243c077dbb8eede73386ddf250a155a8b57acd"
