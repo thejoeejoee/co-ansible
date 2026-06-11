@@ -26,6 +26,21 @@ http://localhost:2019 {
             header_down Location ^/ /webrtc/
         }
     }
+    handle_path /oresults/* {
+        @cors_preflight method OPTIONS
+        header Access-Control-Allow-Origin "https://thejoeejoee.github.io"
+        header Access-Control-Allow-Methods "GET, OPTIONS"
+        header Access-Control-Allow-Headers "Content-Type"
+
+        handle @cors_preflight {
+            respond 204
+        }
+
+        reverse_proxy https://cdn.oresults.eu {
+            header_up Host cdn.oresults.eu
+        }
+    }
+
     handle_path /snapshots/* {
         root * /var/mediamtx/snapshots
         file_server
