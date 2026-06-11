@@ -14,41 +14,34 @@
     dest: /etc/modules-load.d/tcp_bbr.conf
     mode: '0644'
 
-- name: Apply streaming network sysctl tuning
+- name: Deploy streaming network sysctl config
   become: true
-  sysctl:
-    name: "{{ item.key }}"
-    value: "{{ item.value }}"
-    sysctl_file: /etc/sysctl.d/90-streaming.conf
-    reload: true
-  loop: "{{ stream_proxy__sysctl_params | dict2items }}"
-  vars:
-    stream_proxy__sysctl_params:
-      # --- TCP/UDP Buffers (16MB for 1Gbps, conservative for 3.8GB RAM) ---
-      net.core.rmem_max: "16777216"
-      net.core.wmem_max: "16777216"
-      net.core.rmem_default: "262144"
-      net.core.wmem_default: "262144"
-      net.ipv4.tcp_rmem: "4096 87380 16777216"
-      net.ipv4.tcp_wmem: "4096 65536 16777216"
-      net.ipv4.tcp_moderate_rcvbuf: "1"
-      net.ipv4.udp_rmem_min: "16384"
-      net.ipv4.udp_wmem_min: "16384"
-      # --- BBR Congestion Control ---
-      net.core.default_qdisc: fq
-      net.ipv4.tcp_congestion_control: bbr
-      # --- Connection Handling ---
-      net.core.somaxconn: "65535"
-      net.core.netdev_max_backlog: "16384"
-      net.ipv4.tcp_max_syn_backlog: "4096"
-      net.ipv4.tcp_fin_timeout: "15"
-      net.ipv4.tcp_slow_start_after_idle: "0"
-      net.ipv4.tcp_mtu_probing: "1"
-      net.ipv4.tcp_no_metrics_save: "1"
-      # --- Keepalive (detect dead RTMP connections faster) ---
-      net.ipv4.tcp_keepalive_time: "60"
-      net.ipv4.tcp_keepalive_intvl: "10"
-      net.ipv4.tcp_keepalive_probes: "6"
+  copy:
+    content: |
+      net.core.rmem_max=16777216
+      net.core.wmem_max=16777216
+      net.core.rmem_default=262144
+      net.core.wmem_default=262144
+      net.ipv4.tcp_rmem=4096 87380 16777216
+      net.ipv4.tcp_wmem=4096 65536 16777216
+      net.ipv4.tcp_moderate_rcvbuf=1
+      net.ipv4.udp_rmem_min=16384
+      net.ipv4.udp_wmem_min=16384
+      net.core.default_qdisc=fq
+      net.ipv4.tcp_congestion_control=bbr
+      net.core.somaxconn=65535
+      net.core.netdev_max_backlog=16384
+      net.ipv4.tcp_max_syn_backlog=4096
+      net.ipv4.tcp_fin_timeout=15
+      net.ipv4.tcp_slow_start_after_idle=0
+      net.ipv4.tcp_mtu_probing=1
+      net.ipv4.tcp_no_metrics_save=1
+      net.ipv4.tcp_keepalive_time=60
+      net.ipv4.tcp_keepalive_intvl=10
+      net.ipv4.tcp_keepalive_probes=6
+    dest: /etc/sysctl.d/90-streaming.conf
+    mode: '0644'
+  notify: Reload sysctl
 
 - name: Deploy disable-thp systemd unit
   become: true
