@@ -1,0 +1,5 @@
+- name: Restart mediamtx
+  become: true
+  ansible.builtin.systemd:
+    name: csos-mediamtx.service
+    state: restarted
