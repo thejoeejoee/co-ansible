@@ -38,6 +38,8 @@
           auth.anonymous:
             enabled: true
             org_role: Viewer
+          panels:
+            disable_sanitize_html: true
           database:
             type: sqlite3
             path: grafana.db
@@ -109,7 +111,7 @@
   become: true
 
 - name: Deploy custom dashboards
-  copy:
+  template:
     src: mediamtx-dashboard.json
     dest: /var/lib/grafana/dashboards/mediamtx.json
     owner: grafana

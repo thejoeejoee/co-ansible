@@ -73,6 +73,20 @@
     port: 8889
     proto: tcp
 
+- name: UFW allow MOQ HTTP/2
+  become: true
+  ufw:
+    rule: allow
+    port: 8892
+    proto: tcp
+
+- name: UFW allow MOQ HTTP/3
+  become: true
+  ufw:
+    rule: allow
+    port: 8892
+    proto: udp
+
 - name: Prepare mediamtx config directory
   become: true
   file:

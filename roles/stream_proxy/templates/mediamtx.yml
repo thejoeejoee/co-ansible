@@ -23,6 +23,18 @@ srtAddress: 0.0.0.0:8890
 srtla: yes
 srtlaAddress: 0.0.0.0:8891
 
+# Media-over-QUIC (browser publish/read via WebTransport)
+moq: true
+moqHTTP2Address: 0.0.0.0:8892
+moqHTTP3Address: 0.0.0.0:8892
+{% if web_proxy__disable_tls | default(false) %}
+moqServerKey: auto.key
+moqServerCert: auto.crt
+{% else %}
+moqServerKey: /home/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/{{ web_proxy__domain }}/{{ web_proxy__domain }}.key
+moqServerCert: /home/caddy/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory/{{ web_proxy__domain }}/{{ web_proxy__domain }}.crt
+{% endif %}
+
 # if needed, check all the needed ports with ufw
 rtsp: no
 
@@ -32,14 +44,14 @@ metricsAddress: localhost:9998
 pathDefaults:
   # alwaysAvailable: true
   # alwaysAvailableFile: /etc/mediamtx/co-stream-proxy-no-signal.mp4
-  runOnReady: >
-    bash -c '
-    while true; do
-      mkdir -p $(dirname /var/mediamtx/snapshots/$MTX_PATH.jpg)
-      ffmpeg -y -i http://localhost:8888/$MTX_PATH/index.m3u8 -frames:v 1 -update true /var/mediamtx/snapshots/$MTX_PATH.jpg 2>/dev/null
-      sleep 5
-    done'
-  runOnReadyRestart: yes
+  # runOnReady: >
+  #   bash -c '
+  #   while true; do
+  #     mkdir -p $(dirname /var/mediamtx/snapshots/$MTX_PATH.jpg)
+  #     ffmpeg -y -i http://localhost:8888/$MTX_PATH/index.m3u8 -frames:v 1 -update true /var/mediamtx/snapshots/$MTX_PATH.jpg 2>/dev/null
+  #     sleep 5
+  #   done'
+  # runOnReadyRestart: yes
 
 paths:
 
@@ -68,6 +80,7 @@ paths:
 
   # restreaming to YouTube/Facebook (keys loaded from /etc/mediamtx/restream.env)
   restream:
+    alwaysAvailable: false
     runOnReady: /etc/mediamtx/restream.sh
     runOnReadyRestart: yes
 
