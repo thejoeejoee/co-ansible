@@ -1,4 +1,4 @@
-{
+{% raw %}{
   "annotations": {
     "list": [
       {
@@ -439,119 +439,14 @@
       "type": "text",
       "title": "",
       "gridPos": {
-        "w": 3,
-        "h": 5,
+        "w": 24,
+        "h": 14,
         "x": 0,
         "y": 6
       },
       "options": {
         "mode": "html",
-        "content": "<a href=\"/hls/x/slot1/\" target=\"_blank\"><img src=\"/snapshots/x/slot1.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot1/\" target=\"_blank\" style=\"color:inherit\">x/slot1</a></div>"
-      }
-    },
-    {
-      "id": 201,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "w": 3,
-        "h": 5,
-        "x": 3,
-        "y": 6
-      },
-      "options": {
-        "mode": "html",
-        "content": "<a href=\"/hls/x/slot2/\" target=\"_blank\"><img src=\"/snapshots/x/slot2.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot2/\" target=\"_blank\" style=\"color:inherit\">x/slot2</a></div>"
-      }
-    },
-    {
-      "id": 202,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "w": 3,
-        "h": 5,
-        "x": 6,
-        "y": 6
-      },
-      "options": {
-        "mode": "html",
-        "content": "<a href=\"/hls/x/slot3/\" target=\"_blank\"><img src=\"/snapshots/x/slot3.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot3/\" target=\"_blank\" style=\"color:inherit\">x/slot3</a></div>"
-      }
-    },
-    {
-      "id": 203,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "w": 3,
-        "h": 5,
-        "x": 9,
-        "y": 6
-      },
-      "options": {
-        "mode": "html",
-        "content": "<a href=\"/hls/x/slot4/\" target=\"_blank\"><img src=\"/snapshots/x/slot4.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot4/\" target=\"_blank\" style=\"color:inherit\">x/slot4</a></div>"
-      }
-    },
-    {
-      "id": 204,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "w": 3,
-        "h": 5,
-        "x": 12,
-        "y": 6
-      },
-      "options": {
-        "mode": "html",
-        "content": "<a href=\"/hls/x/slot5/\" target=\"_blank\"><img src=\"/snapshots/x/slot5.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot5/\" target=\"_blank\" style=\"color:inherit\">x/slot5</a></div>"
-      }
-    },
-    {
-      "id": 205,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "w": 3,
-        "h": 5,
-        "x": 15,
-        "y": 6
-      },
-      "options": {
-        "mode": "html",
-        "content": "<a href=\"/hls/x/slot6/\" target=\"_blank\"><img src=\"/snapshots/x/slot6.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot6/\" target=\"_blank\" style=\"color:inherit\">x/slot6</a></div>"
-      }
-    },
-    {
-      "id": 206,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "w": 3,
-        "h": 5,
-        "x": 18,
-        "y": 6
-      },
-      "options": {
-        "mode": "html",
-        "content": "<a href=\"/hls/x/slot7/\" target=\"_blank\"><img src=\"/snapshots/x/slot7.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot7/\" target=\"_blank\" style=\"color:inherit\">x/slot7</a></div>"
-      }
-    },
-    {
-      "id": 207,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "w": 3,
-        "h": 5,
-        "x": 21,
-        "y": 6
-      },
-      "options": {
-        "mode": "html",
-        "content": "<a href=\"/hls/x/slot8/\" target=\"_blank\"><img src=\"/snapshots/x/slot8.jpg?t=${__to}\" style=\"width:100%;object-fit:contain;border-radius:4px\" onerror=\"this.style.display='none'\" /></a><div style=\"text-align:center;margin-top:4px;font-size:12px\"><a href=\"/hls/x/slot8/\" target=\"_blank\" style=\"color:inherit\">x/slot8</a></div>"
+        "content": "{% endraw %}<div style=\"display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:8px\"><div style=\"text-align:center\"><div style=\"position:relative\"><iframe src=\"https://{{ web_proxy__domain }}/webrtc/x/slot1\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"https://{{ web_proxy__domain }}/webrtc/x/slot1\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">x/slot1</div></div><div style=\"text-align:center\"><div style=\"position:relative\"><iframe src=\"https://{{ web_proxy__domain }}/webrtc/x/slot2\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"https://{{ web_proxy__domain }}/webrtc/x/slot2\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">x/slot2</div></div><div style=\"text-align:center\"><div style=\"position:relative\"><iframe src=\"https://{{ web_proxy__domain }}/webrtc/x/slot3\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"https://{{ web_proxy__domain }}/webrtc/x/slot3\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">x/slot3</div></div><div style=\"text-align:center\"><div style=\"position:relative\"><iframe src=\"https://{{ web_proxy__domain }}/webrtc/x/slot4\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"https://{{ web_proxy__domain }}/webrtc/x/slot4\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">x/slot4</div></div><div style=\"text-align:center\"><div style=\"position:relative\"><iframe src=\"https://{{ web_proxy__domain }}/webrtc/x/slot5\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"https://{{ web_proxy__domain }}/webrtc/x/slot5\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">x/slot5</div></div><div style=\"text-align:center\"><div style=\"position:relative\"><iframe src=\"https://{{ web_proxy__domain }}/webrtc/x/slot6\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"https://{{ web_proxy__domain }}/webrtc/x/slot6\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">x/slot6</div></div><div style=\"text-align:center\"><div style=\"position:relative\"><iframe src=\"https://{{ web_proxy__domain }}/webrtc/x/slot7\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"https://{{ web_proxy__domain }}/webrtc/x/slot7\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">x/slot7</div></div><div style=\"text-align:center\"><div style=\"position:relative\"><iframe src=\"https://{{ web_proxy__domain }}/webrtc/x/slot8\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"https://{{ web_proxy__domain }}/webrtc/x/slot8\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">x/slot8</div></div></div>{% raw %}"
       }
     },
     {
@@ -2164,4 +2059,4 @@
   "title": "CSOS Stream Operations",
   "uid": "csos-streams",
   "version": 1
-}
+}{% endraw %}
