@@ -12,7 +12,7 @@ http://localhost:2019 {
 {% if web_proxy__disable_tls | default(false) %}
     tls internal
 {% endif %}
-    @telemetry path /prometheus/* /grafana/*
+    @telemetry path /prometheus/* /grafana/* /webrtc/*
 
     handle_path /hls/* {
         reverse_proxy {
