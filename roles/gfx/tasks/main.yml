@@ -39,7 +39,7 @@
   ansible.builtin.template:
     src: config.json.j2
     dest: "{{ gfx__home_dir }}/config/config.json"
-    force: false
+    force: true
 
 - name: Read current settings.json
   ansible.builtin.slurp:
