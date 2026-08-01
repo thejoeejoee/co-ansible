@@ -1,0 +1,40 @@
+- name: Prepare {{ csc__home_dir }}/ directory
+  ansible.builtin.file:
+    path: "{{ csc__home_dir }}/"
+    state: directory
+
+- name: Prepare {{ csc__home_dir }}/config/ directory
+  ansible.builtin.file:
+    path: "{{ csc__home_dir }}/config"
+    state: directory
+
+- name: Synchronize co-stream-control source to {{ csc__home_dir }}/src/
+  synchronize:
+    src: "{{ csc__source_dir }}/"
+    dest: "{{ csc__home_dir }}/src/"
+    mode: push
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=.venv"
+      - "--exclude=.ruff_cache"
+      - "--exclude=.pytest_cache"
+      - "--exclude=node_modules"
+      - "--exclude=.nuxt"
+      - "--exclude=.output"
+      - "--exclude=.data"
+      - "--exclude=api/.venv"
+      - "--exclude=api/instance/"
+      - "--exclude=.env"
+      - "--exclude=**/dist/"
+  delegate_to: localhost
+
+- name: Render api.env to {{ csc__home_dir }}/config/api.env
+  ansible.builtin.template:
+    src: api.env.j2
+    dest: "{{ csc__home_dir }}/config/api.env"
+    mode: "0600"
+
+- name: Render docker-compose.yml to {{ csc__home_dir }}/docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ csc__home_dir }}/docker-compose.yml"

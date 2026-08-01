@@ -1,0 +1,43 @@
+- name: Ensure {{ csc__admin_dist }} exists
+  ansible.builtin.file:
+    path: "{{ csc__admin_dist }}"
+    state: directory
+
+# Fire the admin build asynchronously (poll:0 returns immediately). Deps are
+# already installed by install.yml, so the container just runs the Nuxt build.
+# Native modules (better-sqlite3 for @nuxt/content prerender) are pre-compiled
+# and cached under nm-cache/**, so no apt toolchain needed here.
+- name: Build admin SPA bundle (async docker container)
+  ansible.builtin.command:
+    argv:
+      - docker
+      - run
+      - --rm
+      - -v
+      - "{{ csc__home_dir }}/src:/build"
+      - -v
+      - "{{ csc__admin_dist }}:/out/admin"
+      - -v
+      - "{{ csc__home_dir }}/pnpm-store:/pnpm-store"
+      - -v
+      - "{{ csc__home_dir }}/nm-cache/root:/build/node_modules"
+      - -v
+      - "{{ csc__home_dir }}/nm-cache/admin:/build/admin/node_modules"
+      - -v
+      - "{{ csc__home_dir }}/nm-cache/shared:/build/packages/shared/node_modules"
+      - -w
+      - /build
+      - node:24-slim
+      - bash
+      - -euxc
+      - |
+        corepack enable
+        pnpm config set store-dir /pnpm-store
+        NUXT_PUBLIC_API_BASE=/api pnpm --filter "./admin" build
+        # Atomic-ish replace: wipe old bundle, drop the new one in.
+        find /out/admin -mindepth 1 -delete
+        cp -a admin/.output/public/. /out/admin/
+  async: 900
+  poll: 0
+  register: csc_admin_build_job
+  changed_when: true

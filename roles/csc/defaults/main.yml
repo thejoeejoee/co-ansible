@@ -1,0 +1,25 @@
+csc__home_dir: /home/csc
+csc__source_dir: "{{ playbook_dir }}/../../co-stream-control"
+
+# API is the only container; Caddy fronts it at api.csc.*
+csc__api_port: 8100
+
+# admin + gfx are pure static SPAs (ssr:false, no nitro).
+# Built once per deploy by a throwaway node:24-slim container; Caddy serves the
+# .output/public/ tree directly. See tasks/build_frontends.yml.
+csc__admin_dist: "{{ csc__home_dir }}/admin"
+csc__gfx_dist: "{{ csc__home_dir }}/gfx"
+
+# Native PostgreSQL (apt install postgresql-16 on the VM)
+csc__pg_version: 16
+csc__db_port: 5432
+
+# API tuning
+# MUST stay 1: the API is single-process by design — its SSE fan-out,
+# admin invalidation bus, and background OResults pollers/replay ticker are
+# in-memory per-process singletons. >1 worker forks non-shared-memory
+# processes, silently dropping gfx SSE frames and double-running pollers.
+# Scaling out requires a broker (Redis / Postgres LISTEN-NOTIFY) + a single
+# leader for background tasks. See co-stream-control ADR-023.
+csc__api_workers: 1
+csc__log_level: INFO

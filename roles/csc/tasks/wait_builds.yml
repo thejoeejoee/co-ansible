@@ -1,0 +1,26 @@
+# Both async builds fire earlier with poll:0 and register csc_admin_build_job /
+# csc_gfx_build_job. Wait for whichever were actually fired (depends on which
+# tags were selected). When a build task was skipped by tag, its *_build_job
+# variable is undefined and the corresponding wait is skipped too.
+
+- name: Wait for admin SPA build to finish
+  ansible.builtin.async_status:
+    jid: "{{ csc_admin_build_job.ansible_job_id }}"
+  register: csc_admin_build_result
+  until: csc_admin_build_result.finished
+  retries: 90
+  delay: 10
+  when:
+    - csc_admin_build_job is defined
+    - csc_admin_build_job.ansible_job_id is defined
+
+- name: Wait for gfx SPA build to finish
+  ansible.builtin.async_status:
+    jid: "{{ csc_gfx_build_job.ansible_job_id }}"
+  register: csc_gfx_build_result
+  until: csc_gfx_build_result.finished
+  retries: 90
+  delay: 10
+  when:
+    - csc_gfx_build_job is defined
+    - csc_gfx_build_job.ansible_job_id is defined
