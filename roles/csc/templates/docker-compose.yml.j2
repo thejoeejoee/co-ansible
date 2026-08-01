@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: "{{ csc__home_dir }}/src"
+      dockerfile: api/Dockerfile.prod
+    env_file: "{{ csc__home_dir }}/config/api.env"
+    extra_hosts:
+      # Bridge networking with host-gateway so the container reaches
+      # native PostgreSQL bound on 127.0.0.1:{{ csc__db_port }} of the VM.
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:{{ csc__api_port }}:8000"
+    restart: unless-stopped
+    # Override Dockerfile.prod CMD to pass --root-path /api. FastAPI needs to
+    # know its external mount point so absolute URLs (openapi.json, redirects,
+    # pagination links) include the /api prefix. --no-dev skips the dev group.
+    # `csc__api_workers` MUST be 1 — single-process invariant, see ADR-023.
+    command:
+      - uv
+      - run
+      - --no-dev
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --root-path
+      - /api
+      - --workers
+      - "{{ csc__api_workers }}"

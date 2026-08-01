@@ -1,0 +1,5 @@
+- name: Run Alembic migrations
+  ansible.builtin.command:
+    cmd: docker compose run --rm api uv run --no-dev alembic upgrade head
+    chdir: "{{ csc__home_dir }}"
+  changed_when: true

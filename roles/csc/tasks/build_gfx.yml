@@ -1,0 +1,43 @@
+- name: Ensure {{ csc__gfx_dist }} exists
+  ansible.builtin.file:
+    path: "{{ csc__gfx_dist }}"
+    state: directory
+
+# Fire the gfx build asynchronously (poll:0 returns immediately). Deps are
+# already installed by install.yml, so this container just runs the Nuxt build.
+# NUXT_PUBLIC_API_BASE is absolute because gfx serves cross-origin from
+# gfx.csc.HOST and must hit csc.HOST/api directly.
+- name: Build gfx SPA bundle (async docker container)
+  ansible.builtin.command:
+    argv:
+      - docker
+      - run
+      - --rm
+      - -v
+      - "{{ csc__home_dir }}/src:/build"
+      - -v
+      - "{{ csc__gfx_dist }}:/out/gfx"
+      - -v
+      - "{{ csc__home_dir }}/pnpm-store:/pnpm-store"
+      - -v
+      - "{{ csc__home_dir }}/nm-cache/root:/build/node_modules"
+      - -v
+      - "{{ csc__home_dir }}/nm-cache/gfx:/build/gfx/node_modules"
+      - -v
+      - "{{ csc__home_dir }}/nm-cache/shared:/build/packages/shared/node_modules"
+      - -w
+      - /build
+      - node:24-slim
+      - bash
+      - -euxc
+      - |
+        corepack enable
+        pnpm config set store-dir /pnpm-store
+        NUXT_PUBLIC_API_BASE=https://csc.{{ web_proxy__domain }}/api pnpm --filter "./gfx" build
+        # Atomic-ish replace: wipe old bundle, drop the new one in.
+        find /out/gfx -mindepth 1 -delete
+        cp -a gfx/.output/public/. /out/gfx/
+  async: 900
+  poll: 0
+  register: csc_gfx_build_job
+  changed_when: true
