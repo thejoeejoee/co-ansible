@@ -11,6 +11,14 @@ services:
     ports:
       - "127.0.0.1:{{ csc__api_port }}:8000"
     restart: unless-stopped
+    volumes:
+      # ADR-046 heightmap cache — survives api container restarts.
+      - "heightmap_cache:{{ csc__heightmap_cache_dir }}"
+{% if csc__dmr5g_enabled %}
+      # ADR-046 slice 2.5: direct read of the DMR 5G VRT. Read-only
+      # (the sidecar owns writes); api only samples.
+      - "otd_tiles:/data:ro"
+{% endif %}
     # Override Dockerfile.prod CMD to pass --root-path /api. FastAPI needs to
     # know its external mount point so absolute URLs (openapi.json, redirects,
     # pagination links) include the /api prefix. --no-dev skips the dev group.
@@ -29,3 +37,56 @@ services:
       - /api
       - --workers
       - "{{ csc__api_workers }}"
+
+{% if csc__dmr5g_enabled %}
+  # ADR-044 self-hosted OpenTopoData. Serves the DMR 5G VRT to any
+  # api adapter that hits ``http://otd:5000/v1`` — and to curl on the
+  # loopback bind for operator debug. Build context is the ajnisbet
+  # repo pinned to v1.10.0; the ``platforms: linux/amd64`` clause is
+  # a workaround for an expired Apache Arrow apt-repo signing key on
+  # arm64 in their Dockerfile.
+  otd:
+    build:
+      context: https://github.com/ajnisbet/opentopodata.git#v1.10.0
+      dockerfile: docker/Dockerfile
+      platforms:
+        - linux/amd64
+    volumes:
+      - "{{ csc__home_dir }}/src/otd/config.yaml:/app/config.yaml:ro"
+      - "otd_tiles:/app/data:ro"
+    ports:
+      - "127.0.0.1:{{ csc__otd_port }}:5000"
+    restart: unless-stopped
+
+  # ADR-044 sidecar that walks the CUZK CDN, downloads DMR 5G tiles,
+  # writes them into the shared volume, and updates the VRT mosaic.
+  # LISTEN/NOTIFY driven (see mirror/listener.py) so it wakes on
+  # ``RouteChoice`` bbox events dropped by the api; belt-and-braces
+  # 30 s poll interval catches missed signals. SIGTERM triggers a
+  # {{ csc__dmr5g_shutdown_grace_s | default(120) }} s in-flight drain;
+  # compose ``stop_grace_period`` matches.
+  dmr5g-mirror:
+    build:
+      context: "{{ csc__home_dir }}/src"
+      dockerfile: otd/Dockerfile
+    environment:
+      CSC_DATABASE_URL: "postgresql+asyncpg://{{ credentials.csc_db.user }}:{{ credentials.csc_db.pass }}@host.docker.internal:{{ csc__db_port }}/{{ credentials.csc_db.name }}"
+      CSC_DMR5G_CONCURRENCY: "{{ csc__dmr5g_concurrency }}"
+      CSC_DMR5G_TILE_DIR: /data/dmr5g
+      CSC_LOG_LEVEL: "{{ csc__log_level }}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - "otd_tiles:/data"
+    stop_grace_period: 2m
+    restart: unless-stopped
+{% endif %}
+
+volumes:
+  # ADR-046 heightmap cache (shared with the api container only).
+  heightmap_cache:
+{% if csc__dmr5g_enabled %}
+  # ADR-044 shared DMR 5G raster store. Writer: dmr5g-mirror. Readers:
+  # otd (raster serving) and api (rasterio direct reads).
+  otd_tiles:
+{% endif %}

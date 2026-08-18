@@ -23,3 +23,24 @@ csc__db_port: 5432
 # leader for background tasks. See co-stream-control ADR-023.
 csc__api_workers: 1
 csc__log_level: INFO
+
+# ADR-046 heightmap cache — the ``course_route_choices_3d`` gfx generates
+# a 512×512 16-bit PNG per (event, group, dem_source, bbox) tuple, cached
+# on disk. Backed by a named docker volume so re-fires after api container
+# restarts don't rebuild from the DEM.
+csc__heightmap_cache_dir: /var/lib/csc/heightmap
+
+# --- DMR 5G stack (ADR-044 + ADR-046) ---
+# self-hosted OpenTopoData instance serving the DMR 5G raster + a
+# tile-mirror sidecar that walks the CUZK CDN. When these are enabled
+# (default), CZE events get ~0.18 m RMSE elevations; when disabled,
+# the api's DemSource cascade silently falls through to Copernicus
+# GLO-30 (~4 m RMSE) — the deployment still works, just less accurate.
+csc__dmr5g_enabled: true
+# 127.0.0.1 bind for the OTD container. Only reached by the api
+# container over the docker bridge (``http://otd:5000/v1``); the bind
+# is exposed on loopback so an operator can also curl it for debug.
+csc__otd_port: 5001
+# Parallel HTTP fetches the dmr5g-mirror opens against the CUZK CDN.
+# Bump if the CDN is happy with more; drop if the CDN rate-limits.
+csc__dmr5g_concurrency: 5
