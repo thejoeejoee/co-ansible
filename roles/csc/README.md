@@ -55,7 +55,7 @@ The `otd` + `dmr5g-mirror` services are gated by `csc__dmr5g_enabled` (default `
 
 3. **Source repo**: `co-stream-control/` checked out alongside `co-ansible/`. Path overridable via `csc__source_dir`.
 
-4. **Production Dockerfile** for the API in the source repo: `api/Dockerfile.prod` (uv workspace-aware per ADR-045). admin + gfx have no runtime container — they are static SPAs built via `pnpm --filter <app> build` inside a throwaway builder.
+4. **Single unified `api/Dockerfile`** in the source repo (uv workspace-aware per ADR-045). Dev and prod share the same image — the compose files differ only in the CMD override. admin + gfx have no runtime container — they are static SPAs built via `pnpm --filter <app> build` inside a throwaway builder.
 
 5. **DMR 5G stack (optional)** — needs `otd/Dockerfile` and `otd/config.yaml` in the source repo. Disable by setting `csc__dmr5g_enabled: false` in inventory. The OpenTopoData image builds from the `ajnisbet/opentopodata` git tag `v1.10.0` at compose-up time (no image pull); `platforms: linux/amd64` works around an expired Apache Arrow apt-repo signing key in their arm64 Dockerfile.
 

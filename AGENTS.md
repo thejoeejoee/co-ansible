@@ -109,6 +109,6 @@ ansible-galaxy install -r requirements.yml
 - **OrbStack `.orb.local` proxy**: forces HTTPS to port 443 — cannot serve plain HTTP. Solved with `tls internal` (self-signed certs) controlled by `web_proxy__disable_tls` inventory var.
 - **mediamtx config is 93 lines** — the largest template. Stream slots (paths) are hardcoded there, not dynamically generated.
 - **Grafana `root_url`** in telemetry role derives from `web_proxy__domain` — cross-role dependency on `web_proxy` inventory var.
-- **csc api Dockerfile.prod is uv workspace-aware** (ADR-045 in co-stream-control): the compose ``context`` is the whole repo root because the API image needs the workspace root pyproject + lockfile + `packages/py-shared` sources at build time.
+- **csc api uses a single, workspace-aware `api/Dockerfile`** (ADR-045 in co-stream-control): dev and prod share the same image — the compose files differ only in the CMD override (`--reload` in dev, `--root-path /api --workers 1` in prod). The compose ``context`` is the whole repo root because the API image needs the workspace root pyproject + lockfile + `packages/py-shared` sources at build time.
 - **DMR 5G stack default-on**: `csc__dmr5g_enabled: true`. Adds ~1–2 GB of tiles per Czech event over time on the shared `otd_tiles` volume. Set to `false` in inventory for deployments that don't handle Czech events — the api cascades to Copernicus GLO-30 with no config change on the api side.
 - **README is stale in one spot** — references `playbooks/templates/` which no longer exists (moved to `roles/stream_proxy/templates/`).
