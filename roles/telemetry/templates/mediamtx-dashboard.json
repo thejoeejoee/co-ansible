@@ -434,28 +434,151 @@
       "title": "Per-Slot Status",
       "type": "row"
     },
+    {% endraw %}
     {
-      "id": 200,
-      "type": "text",
-      "title": "",
-      "gridPos": {
-        "w": 24,
-        "h": 14,
-        "x": 0,
-        "y": 6
+      "id": 300, "type": "stat", "title": "x/slot1",
+      "gridPos": {"h": 7, "w": 6, "x": 0, "y": 6},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}, "expr": "sum(paths{name=\"x/slot1\",state=\"ready\"}) or vector(0)", "instant": true, "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red", "index": 0}, "1": {"text": "ONLINE", "color": "green", "index": 1}}}],
+          "noValue": "OFFLINE",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]},
+          "links": [{"title": "Click to preview video", "url": "https://{{ web_proxy__domain }}/webrtc/x/slot1", "targetBlank": true}]
+        },
+        "overrides": []
       },
-      "options": {
-        "mode": "html",
-        "content": "{% endraw %}<div id=\"slot-grid\" style=\"display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:8px\"></div><script>(function(){var base='https://{{ web_proxy__domain }}';var slots=['x/slot1','x/slot2','x/slot3','x/slot4','x/slot5','x/slot6','x/slot7','x/slot8'];var isChrome=/Chrome/.test(navigator.userAgent)&&!/Edg/.test(navigator.userAgent);var grid=document.getElementById('slot-grid');slots.forEach(function(s){var c=document.createElement('div');c.style.textAlign='center';if(isChrome){c.innerHTML='<div style=\"position:relative\"><iframe src=\"'+base+'/webrtc/'+s+'\" style=\"width:100%;aspect-ratio:16/9;border:none;border-radius:4px\" allow=\"autoplay\"></iframe><a href=\"'+base+'/webrtc/'+s+'\" target=\"_blank\" style=\"position:absolute;inset:0\"></a></div><div style=\"margin-top:4px;font-size:12px\">'+s+' (webrtc)</div>';}else{var img=base+'/snapshots/'+s+'.jpg';c.innerHTML='<div><img src=\"'+img+'\" style=\"width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px;background:#111\"></div><div style=\"margin-top:4px;font-size:12px\">'+s+' (snapshot)</div>';}grid.appendChild(c);});if(!isChrome){setInterval(function(){grid.querySelectorAll('img').forEach(function(img){img.src=img.src.split('?')[0]+'?t='+Date.now();});},10000);}})()</script>{% raw %}"
-      }
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "textMode": "value", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
     },
+    {
+      "id": 301, "type": "stat", "title": "x/slot2",
+      "gridPos": {"h": 7, "w": 6, "x": 6, "y": 6},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}, "expr": "sum(paths{name=\"x/slot2\",state=\"ready\"}) or vector(0)", "instant": true, "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red", "index": 0}, "1": {"text": "ONLINE", "color": "green", "index": 1}}}],
+          "noValue": "OFFLINE",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]},
+          "links": [{"title": "Click to preview video", "url": "https://{{ web_proxy__domain }}/webrtc/x/slot2", "targetBlank": true}]
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "textMode": "value", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "id": 302, "type": "stat", "title": "x/slot3",
+      "gridPos": {"h": 7, "w": 6, "x": 12, "y": 6},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}, "expr": "sum(paths{name=\"x/slot3\",state=\"ready\"}) or vector(0)", "instant": true, "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red", "index": 0}, "1": {"text": "ONLINE", "color": "green", "index": 1}}}],
+          "noValue": "OFFLINE",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]},
+          "links": [{"title": "Click to preview video", "url": "https://{{ web_proxy__domain }}/webrtc/x/slot3", "targetBlank": true}]
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "textMode": "value", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "id": 303, "type": "stat", "title": "x/slot4",
+      "gridPos": {"h": 7, "w": 6, "x": 18, "y": 6},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}, "expr": "sum(paths{name=\"x/slot4\",state=\"ready\"}) or vector(0)", "instant": true, "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red", "index": 0}, "1": {"text": "ONLINE", "color": "green", "index": 1}}}],
+          "noValue": "OFFLINE",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]},
+          "links": [{"title": "Click to preview video", "url": "https://{{ web_proxy__domain }}/webrtc/x/slot4", "targetBlank": true}]
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "textMode": "value", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "id": 304, "type": "stat", "title": "x/slot5",
+      "gridPos": {"h": 7, "w": 6, "x": 0, "y": 13},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}, "expr": "sum(paths{name=\"x/slot5\",state=\"ready\"}) or vector(0)", "instant": true, "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red", "index": 0}, "1": {"text": "ONLINE", "color": "green", "index": 1}}}],
+          "noValue": "OFFLINE",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]},
+          "links": [{"title": "Click to preview video", "url": "https://{{ web_proxy__domain }}/webrtc/x/slot5", "targetBlank": true}]
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "textMode": "value", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "id": 305, "type": "stat", "title": "x/slot6",
+      "gridPos": {"h": 7, "w": 6, "x": 6, "y": 13},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}, "expr": "sum(paths{name=\"x/slot6\",state=\"ready\"}) or vector(0)", "instant": true, "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red", "index": 0}, "1": {"text": "ONLINE", "color": "green", "index": 1}}}],
+          "noValue": "OFFLINE",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]},
+          "links": [{"title": "Click to preview video", "url": "https://{{ web_proxy__domain }}/webrtc/x/slot6", "targetBlank": true}]
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "textMode": "value", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "id": 306, "type": "stat", "title": "x/slot7",
+      "gridPos": {"h": 7, "w": 6, "x": 12, "y": 13},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}, "expr": "sum(paths{name=\"x/slot7\",state=\"ready\"}) or vector(0)", "instant": true, "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red", "index": 0}, "1": {"text": "ONLINE", "color": "green", "index": 1}}}],
+          "noValue": "OFFLINE",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]},
+          "links": [{"title": "Click to preview video", "url": "https://{{ web_proxy__domain }}/webrtc/x/slot7", "targetBlank": true}]
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "textMode": "value", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "id": 307, "type": "stat", "title": "x/slot8",
+      "gridPos": {"h": 7, "w": 6, "x": 18, "y": 13},
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}, "expr": "sum(paths{name=\"x/slot8\",state=\"ready\"}) or vector(0)", "instant": true, "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red", "index": 0}, "1": {"text": "ONLINE", "color": "green", "index": 1}}}],
+          "noValue": "OFFLINE",
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]},
+          "links": [{"title": "Click to preview video", "url": "https://{{ web_proxy__domain }}/webrtc/x/slot8", "targetBlank": true}]
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "textMode": "value", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+{% raw %}
     {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 20
       },
       "id": 102,
       "title": "Bandwidth Over Time",
@@ -520,7 +643,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 21
       },
       "id": 20,
       "options": {
@@ -608,7 +731,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 21
       },
       "id": 21,
       "options": {
@@ -643,7 +766,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 29
       },
       "id": 103,
       "title": "Protocol Connections",
@@ -681,7 +804,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 21
+        "y": 30
       },
       "id": 30,
       "options": {
@@ -744,7 +867,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 21
+        "y": 30
       },
       "id": 31,
       "options": {
@@ -807,7 +930,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 21
+        "y": 30
       },
       "id": 32,
       "options": {
@@ -870,7 +993,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 21
+        "y": 30
       },
       "id": 33,
       "options": {
@@ -907,7 +1030,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 34
       },
       "id": 104,
       "title": "SRT Quality",
@@ -975,7 +1098,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 26
+            "y": 35
           },
           "id": 40,
           "options": {
@@ -1072,7 +1195,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 26
+            "y": 35
           },
           "id": 41,
           "options": {
@@ -1120,7 +1243,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 35
       },
       "id": 208,
       "title": "SRTLA MediaMTX",
@@ -1154,7 +1277,7 @@
             "h": 4,
             "w": 6,
             "x": 0,
-            "y": 28
+            "y": 36
           },
           "id": 209,
           "options": {
@@ -1208,7 +1331,7 @@
             "h": 4,
             "w": 6,
             "x": 6,
-            "y": 28
+            "y": 36
           },
           "id": 210,
           "options": {
@@ -1262,7 +1385,7 @@
             "h": 4,
             "w": 6,
             "x": 12,
-            "y": 28
+            "y": 36
           },
           "id": 211,
           "options": {
@@ -1316,7 +1439,7 @@
             "h": 4,
             "w": 6,
             "x": 18,
-            "y": 28
+            "y": 36
           },
           "id": 212,
           "options": {
@@ -1386,7 +1509,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 32
+            "y": 40
           },
           "id": 213,
           "options": {
@@ -1461,7 +1584,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 32
+            "y": 40
           },
           "id": 214,
           "options": {
@@ -1536,7 +1659,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 40
+            "y": 48
           },
           "id": 215,
           "options": {
@@ -1575,7 +1698,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 36
       },
       "id": 107,
       "title": "Error Frames",
@@ -1640,7 +1763,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 27
+            "y": 37
           },
           "id": 50,
           "options": {
@@ -1729,7 +1852,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 27
+            "y": 37
           },
           "id": 51,
           "options": {
@@ -1767,7 +1890,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 37
       },
       "id": 105,
       "title": "Restream",
@@ -1819,7 +1942,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 27
+        "y": 38
       },
       "id": 60,
       "options": {
@@ -1909,7 +2032,7 @@
         "h": 8,
         "w": 10,
         "x": 4,
-        "y": 27
+        "y": 38
       },
       "id": 61,
       "options": {
@@ -1997,7 +2120,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 27
+        "y": 38
       },
       "id": 62,
       "options": {
