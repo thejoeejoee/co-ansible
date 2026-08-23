@@ -80,7 +80,7 @@ paths:
   demo: {}
   x/demo: {}
 
-  # restreaming to YouTube/Facebook (keys loaded from /etc/mediamtx/restream.env)
+  # restreaming to arbitrary RTMP/SRT URLs (list loaded from /etc/mediamtx/restream.targets)
   restream:
     alwaysAvailable: false
     runOnReady: /etc/mediamtx/restream.sh
