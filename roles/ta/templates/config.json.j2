@@ -1,6 +1,6 @@
 {
  "security": {
-  "jwt_private_key": ""
+  "jwt_private_key": {{ ta__jwt_private_key | to_json }}
  },
  "users": [],
  "cloud_destinations": [],
@@ -31,10 +31,10 @@
   }{{ "," if not loop.last else "" }}
 {% endfor %}
  ],
- "externalAddress": "http://0.0.0.0:4455/#/tally",
+ "externalAddress": {{ ta__external_address | to_json }},
  "chat_enabled": true,
  "remoteErrorReporting": false,
- "uuid": "",
+ "uuid": {{ ta__uuid | to_json }},
  "mqtt": {
   "enabled": false,
   "broker": "localhost",
