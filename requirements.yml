@@ -5,3 +5,4 @@ collections:
   - name: prometheus.prometheus
   - name: grafana.grafana
   - name: community.docker
+  - name: community.postgresql
