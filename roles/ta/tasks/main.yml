@@ -19,15 +19,16 @@
     path: "{{ ta__home_dir }}/config/TallyArbiter"
     state: directory
 
-# Seeded once: TallyArbiter rewrites this file at runtime (generated JWT key,
-# uuid, default users, and any devices/sources added via the UI). force: false
-# keeps re-running the playbook from clobbering that state after first deploy.
-- name: Seed initial config.json
+# config.json is fully IaC-owned: every deploy overwrites it with the
+# devices/outputs declared in ta__devices/ta__outputs. Any changes made
+# through the TallyArbiter UI (devices, sources, bus_options) do not
+# persist across deploys.
+- name: Deploy config.json
   become: true
   template:
     src: config.json.j2
     dest: "{{ ta__home_dir }}/config/TallyArbiter/config.json"
-    force: false
+    force: true
   notify: Restart TallyArbiter
 
 - name: Prepare compose

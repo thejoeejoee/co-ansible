@@ -1,5 +1,18 @@
 ta__home_dir: /home/ta
 
+# Generated once per host on the control machine (cached under .credentials/,
+# gitignored) and reused on every deploy. config.json is fully overwritten on
+# each run, so without this cache TallyArbiter would mint a new JWT signing
+# key/instance uuid on every deploy, invalidating existing sessions/tokens.
+ta__jwt_private_key: "{{ lookup('ansible.builtin.password', playbook_dir ~ '/../.credentials/' ~ inventory_hostname ~ '/ta_jwt_private_key', length=64) }}"
+ta__uuid_raw: "{{ lookup('ansible.builtin.password', playbook_dir ~ '/../.credentials/' ~ inventory_hostname ~ '/ta_uuid', length=32, chars=['0123456789abcdef']) }}"
+ta__uuid: "{{ ta__uuid_raw[0:8] }}-{{ ta__uuid_raw[8:12] }}-{{ ta__uuid_raw[12:16] }}-{{ ta__uuid_raw[16:20] }}-{{ ta__uuid_raw[20:32] }}"
+
+# Public URL, matches the ta.{{ web_proxy__domain }} vhost in
+# roles/web_proxy/templates/Caddyfile.j2 (always served over TLS, real certs
+# in prod / self-signed "tls internal" in dev).
+ta__external_address: "https://ta.{{ web_proxy__domain }}/#/tally"
+
 # Outputs (TallyArbiter "bus_options"): only Preview/Program are used here,
 # the built-in Aux 1-8 buses are dropped since nothing wires to them.
 ta__outputs:
