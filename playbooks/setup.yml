@@ -14,13 +14,17 @@
       import_role:
         name: ../roles/web_proxy
 
-    - tags: [gfx]
-      import_role:
-        name: ../roles/gfx
-
-    # - tags: [ta]
+    # - tags: [gfx]
     #   import_role:
-    #     name: ../roles/ta
+    #     name: ../roles/gfx
+
+    - tags: [csc]
+      import_role:
+        name: ../roles/csc
+
+    - tags: [ta]
+      import_role:
+        name: ../roles/ta
 
     - tags: [telemetry]
       import_role:
