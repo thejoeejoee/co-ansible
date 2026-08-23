@@ -1,0 +1,21 @@
+ta__home_dir: /home/ta
+
+# Outputs (TallyArbiter "bus_options"): only Preview/Program are used here,
+# the built-in Aux 1-8 buses are dropped since nothing wires to them.
+ta__outputs:
+  - { id: e393251c, label: Preview, type: preview, color: "#3fe481", priority: 50 }
+  - { id: 334e4eda, label: Program, type: program, color: "#e43f5a", priority: 200 }
+
+# Devices (TallyArbiter "devices"): the tally targets shown in the UI.
+# Source addresses (which switcher input/OBS scene feeds each one) are
+# assigned manually in the TallyArbiter UI post-deploy, per upstream docs:
+# https://josephdadams.github.io/TallyArbiter/docs/usage/sections/devices
+ta__devices:
+  - slot1
+  - slot2
+  - slot3
+  - slot4
+  - cam1
+  - cam2
+  - cam3
+  - cam4

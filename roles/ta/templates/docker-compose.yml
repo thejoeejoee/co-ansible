@@ -4,7 +4,7 @@ services:
     ports:
       - '127.0.0.1:4455:4455'
     volumes:
-      - /home/ta/config:/app/config
+      - {{ ta__home_dir }}/config:/app/config
     environment:
       - APPDATA=/app/config
     restart: unless-stopped
