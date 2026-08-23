@@ -20,6 +20,12 @@ csos:
         facebook_key: ""
         write:
           - { user: restream, pass: changeme }
+      csc:
+        - { user: admin, pass: changeme }
+      csc_db:
+        user: csc
+        pass: csc
+        name: csc
 
     web_proxy__domain: csos.orb.local
     web_proxy__disable_tls: true
