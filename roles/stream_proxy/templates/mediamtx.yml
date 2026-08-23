@@ -42,18 +42,6 @@ rtspAddress: localhost:8554
 metrics: yes
 metricsAddress: localhost:9998
 
-pathDefaults:
-  # alwaysAvailable: true
-  # alwaysAvailableFile: /etc/mediamtx/co-stream-proxy-no-signal.mp4
-  runOnReady: >
-    bash -c '
-    sleep $((RANDOM % 10));
-    while true; do
-      mkdir -p $(dirname /var/mediamtx/snapshots/$MTX_PATH.jpg);
-      ffmpeg -y -rtsp_transport tcp -i rtsp://localhost:8554/$MTX_PATH -frames:v 1 -update 1 -vf scale=480:-1 -q:v 8 /var/mediamtx/snapshots/$MTX_PATH.jpg 2>/dev/null;
-      sleep 30;
-    done'
-  runOnReadyRestart: yes
 
 paths:
 
