@@ -1,0 +1,44 @@
+- name: Install PostgreSQL {{ csc__pg_version }}
+  ansible.builtin.apt:
+    name:
+      - "postgresql-{{ csc__pg_version }}"
+      - "postgresql-client-{{ csc__pg_version }}"
+      - python3-psycopg2  # needed by community.postgresql modules
+    update_cache: true
+    state: present
+
+- name: Ensure PostgreSQL listens on all interfaces (access gated by pg_hba + UFW)
+  ansible.builtin.lineinfile:
+    path: "/etc/postgresql/{{ csc__pg_version }}/main/postgresql.conf"
+    regexp: '^#?\s*listen_addresses\s*='
+    line: "listen_addresses = '*'"
+    state: present
+  notify: Restart postgresql
+
+- name: Allow csc DB connections from the Docker bridge network
+  community.postgresql.postgresql_pg_hba:
+    dest: "/etc/postgresql/{{ csc__pg_version }}/main/pg_hba.conf"
+    contype: host
+    databases: "{{ credentials.csc_db.name }}"
+    users: "{{ credentials.csc_db.user }}"
+    source: 172.16.0.0/12
+    method: scram-sha-256
+    create: true
+  notify: Restart postgresql
+
+- name: Ensure PostgreSQL is enabled and started
+  ansible.builtin.systemd:
+    name: postgresql
+    enabled: true
+    state: started
+
+- name: UFW allow 5432 from Docker bridge subnet only
+  become: true
+  ufw:
+    rule: allow
+    port: "{{ csc__db_port }}"
+    proto: tcp
+    from_ip: 172.16.0.0/12
+
+- name: Flush handlers before touching roles/databases
+  ansible.builtin.meta: flush_handlers

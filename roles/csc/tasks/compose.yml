@@ -1,0 +1,6 @@
+- name: Create and start csc services
+  community.docker.docker_compose_v2:
+    project_src: "{{ csc__home_dir }}/"
+    files:
+      - docker-compose.yml
+    build: always
