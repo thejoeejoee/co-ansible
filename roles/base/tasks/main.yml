@@ -14,4 +14,66 @@
   block:
     - include_role:
         name: geerlingguy.docker
+      vars:
+        # Host-wide default so any container without its own `logging:`
+        # override can't fill the disk (e.g. dmr5g-mirror hit 11G/week).
+        docker_daemon_options:
+          log-driver: json-file
+          log-opts:
+            max-size: "100m"
+            max-file: "5"
+  become: true
+
+- name: Shorten systemd-journald retention
+  block:
+    # Every non-docker service on this host (caddy, mediamtx, prometheus,
+    # grafana, node_exporter, sshd, ...) logs to the journal, not a file —
+    # cap it the same way the Docker log driver is capped above.
+    - name: Ensure journald.conf.d directory exists
+      ansible.builtin.file:
+        path: /etc/systemd/journald.conf.d
+        state: directory
+        mode: "0755"
+
+    - name: Cap journald disk usage + retention
+      ansible.builtin.copy:
+        dest: /etc/systemd/journald.conf.d/retention.conf
+        content: |
+          [Journal]
+          SystemMaxUse=200M
+          MaxRetentionSec=1week
+        mode: "0644"
+      register: _journald_conf
+
+    - name: Restart systemd-journald to apply new limits
+      ansible.builtin.systemd:
+        name: systemd-journald
+        state: restarted
+      when: _journald_conf.changed
+
+    - name: Vacuum journal down to the new cap immediately
+      ansible.builtin.command: journalctl --vacuum-size=200M
+      changed_when: true
+      when: _journald_conf.changed
+  become: true
+
+- name: Shorten default logrotate retention
+  block:
+    # Debian/Ubuntu's stock /etc/logrotate.conf defaults to `rotate 4`
+    # (weekly) for any log under /etc/logrotate.d/* that doesn't set its
+    # own count (syslog, auth.log, dpkg.log, ufw.log, ...). Tightening the
+    # global default here doesn't touch files that already override
+    # `rotate` themselves.
+    - name: Reduce default rotate count
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.conf
+        regexp: "^rotate\\s+\\d+"
+        line: "rotate 2"
+
+    - name: Cap individual log size regardless of schedule
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.conf
+        regexp: "^#?\\s*maxsize"
+        insertafter: "^rotate"
+        line: "maxsize 50M"
   become: true
