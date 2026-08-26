@@ -1,30 +1,45 @@
 #!/bin/bash
 set -uo pipefail
 
-source /etc/mediamtx/restream.env
-
+TARGETS_FILE=/etc/mediamtx/restream.targets
 INPUT="rtmp://127.0.0.1:1935/${MTX_PATH}"
 PIDS=()
 
 trap 'kill 0' INT TERM
 
-if [ -n "${RESTREAM_YOUTUBE_KEY:-}" ]; then
-  (while true; do
-    ffmpeg -i "$INPUT" -c copy -f flv "rtmp://a.rtmp.youtube.com/live2/${RESTREAM_YOUTUBE_KEY}"
-    echo "YouTube stream ended, restarting in 2s..."
-    sleep 2
-  done) &
-  PIDS+=($!)
+if [ ! -r "$TARGETS_FILE" ]; then
+  echo "Targets file $TARGETS_FILE missing or unreadable, exiting"
+  exit 0
 fi
 
-if [ -n "${RESTREAM_FACEBOOK_KEY:-}" ]; then
-  (while true; do
-    ffmpeg -i "$INPUT" -c copy -f flv "rtmps://live-api-s.facebook.com:443/rtmp/${RESTREAM_FACEBOOK_KEY}"
-    echo "Facebook stream ended, restarting in 2s..."
-    sleep 2
-  done) &
+restream_one() {
+  local url="$1"
+  local fmt
+  case "$url" in
+    rtmp://*|rtmps://*) fmt=flv ;;
+    srt://*)            fmt=mpegts ;;
+    *)
+      echo "Unsupported URL scheme, skipping: $url"
+      return
+      ;;
+  esac
+  while true; do
+    ffmpeg -i "$INPUT" -c copy -f "$fmt" "$url"
+    echo "Stream to $url ended, restarting in 1s..."
+    sleep 1
+  done
+}
+
+while IFS= read -r line || [ -n "$line" ]; do
+  # strip leading/trailing whitespace
+  url="${line#"${line%%[![:space:]]*}"}"
+  url="${url%"${url##*[![:space:]]}"}"
+  [ -z "$url" ] && continue
+  case "$url" in \#*) continue ;; esac
+
+  restream_one "$url" &
   PIDS+=($!)
-fi
+done < "$TARGETS_FILE"
 
 if [ ${#PIDS[@]} -eq 0 ]; then
   echo "No restream targets configured, exiting"
