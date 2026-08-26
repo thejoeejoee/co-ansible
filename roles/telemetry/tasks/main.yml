@@ -34,10 +34,22 @@
             admin_password: "{{ credentials.telemetry[0].pass }}"
           auth:
             ldap: {enabled: false}
-            disable_login_form: true
+            disable_login_form: false
           auth.anonymous:
+            enabled: false
+          auth.generic_oauth:
             enabled: true
-            org_role: Viewer
+            name: Casdoor
+            client_id: "{{ auth__grafana_oidc_client_id }}"
+            client_secret: "{{ auth__grafana_oidc_client_secret }}"
+            auth_url: "https://{{ auth__domain }}/login/oauth/authorize"
+            token_url: "https://{{ auth__domain }}/api/login/oauth/access_token"
+            api_url: "https://{{ auth__domain }}/api/userinfo"
+            scopes: "openid profile email"
+            role_attribute_path: "contains(groups[*], '{{ auth__org }}/admin') && 'GrafanaAdmin' || contains(groups[*], '{{ auth__org }}/production') && 'Viewer' || 'none'"
+            role_attribute_strict: true
+            auto_login: true
+            allow_sign_up: true
           panels:
             disable_sanitize_html: true
           database:
@@ -108,6 +120,7 @@
         status_code: [200]
       no_log: true
       when: _grafana_set_user.status != 200
+      failed_when: false
   become: true
 
 - name: Deploy custom dashboards

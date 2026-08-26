@@ -1,0 +1,9 @@
+- name: Restart auth stack
+  ansible.builtin.command:
+    cmd: docker compose -f {{ auth__home_dir }}/docker-compose.yml restart
+  become: true
+
+- name: Restart oauth2-proxy
+  ansible.builtin.command:
+    cmd: docker compose -f {{ auth__home_dir }}/docker-compose.yml restart oauth2-proxy
+  become: true
