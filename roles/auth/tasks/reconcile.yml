@@ -178,15 +178,25 @@
     label: "{{ item.name }}"
 
 # enablePassword: false alone only hides the password field in Casdoor's own
-# UI — the backend's Application.IsPasswordEnabled() (the check /api/login
-# actually enforces) has a bug where it ignores a signinMethods entry's
-# "Hide password" rule and returns true as soon as *any* entry named
-# "Password" exists, regardless of that rule. The only way to make it
-# return false is to also send signinMethods as a genuinely empty list, so
-# it falls through to the (correct) enablePassword check instead — see
-# https://github.com/casdoor/casdoor/blob/master/object/application_util.go
-# (IsPasswordEnabled). Together with leaving enableSignUp true (needed for
-# OAuth auto-registration) and each provider's canSignUp above, this makes
+# UI. Every Application.IsXEnabled() check the backend actually enforces
+# (IsPasswordEnabled, IsFaceIdEnabled, IsLdapEnabled, ...) has the same bug:
+# it just checks whether *any* signinMethods entry with that Name exists,
+# completely ignoring its "rule" field ("Hide password" included) — see
+# https://github.com/casdoor/casdoor/blob/master/object/application_util.go.
+# So a method is truly off only when its name is absent from signinMethods
+# entirely, never by adding it with a "hide" rule.
+#
+# That rules out signinMethods: [] too — Casdoor auto-appends a *live*
+# "Face ID" entry (rule: None) to any application whose stored list is
+# empty (object/application_util.go, extendApplicationWithSigninMethods),
+# so leaving it empty silently re-enables Face ID login for anyone who's
+# registered a face. The fix is a single placeholder entry whose name
+# matches none of Casdoor's recognized methods (Password, Face ID, LDAP,
+# WebAuthn, Verification code) — non-empty enough to skip the auto-append,
+# but not a real method by any of the checks above, so nothing is enabled.
+#
+# Together with leaving enableSignUp true (needed for OAuth
+# auto-registration) and each provider's canSignUp above, this makes
 # Google/GitHub the only way to create or sign in to an account, enforced
 # server-side and not just hidden in the UI.
 #
@@ -220,7 +230,8 @@
       organization: "{{ auth__org }}"
       cert: "cert-{{ auth__org }}"
       enablePassword: false
-      signinMethods: []
+      signinMethods:
+        - { name: "OAuth only", displayName: "OAuth only", rule: "None" }
       enableSignUp: true
       grantTypes: [authorization_code, refresh_token]
       redirectUris:
