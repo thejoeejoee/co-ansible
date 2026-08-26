@@ -21,7 +21,7 @@ Each stream has a **slot** — a unique identifier (mediamtx calls it a `path`).
 
 ### Grafana
 
-Anonymous read-only access (no login required):
+Sign in via Casdoor SSO (Google or a manual account an admin has created and approved):
 
 ```
 https://csos.josefkolar.cz/grafana/
@@ -36,7 +36,7 @@ Preview via RTMP:
 ffplay "rtmp://csos.josefkolar.cz:1935/SLOT?user=USER&pass=PASS"
 ```
 
-HLS preview (no auth):
+HLS preview (requires SSO login, `admin` or `production` Casdoor group):
 ```
 https://csos.josefkolar.cz/hls/SLOT/
 ```
@@ -71,6 +71,7 @@ ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --tags stream_proxy
 | Tag | What it deploys |
 |-----|-----------------|
 | `base` | apt upgrade, ffmpeg, Docker |
+| `auth` | Casdoor (OIDC provider) + oauth2-proxy (Caddy `forward_auth` gateway) — see `roles/auth/README.md` |
 | `stream_proxy` | mediamtx binary + config, restream script + env, systemd unit, UFW rules |
 | `web_proxy` | Caddy + Caddyfile, UFW rules (80/443) |
 | `gfx` | GFX overlay Docker Compose + config |
@@ -80,7 +81,11 @@ ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --tags stream_proxy
 
 Production secrets live in `csos.enc` (Ansible Vault). Local dev uses plaintext dummy values in `inventory/orb.yaml`.
 
-Secrets are structured as a `credentials` dict with keys: `stream_write`, `stream_read`, `telemetry`, `gfx`.
+Secrets are structured as a `credentials` dict with keys: `stream_write`, `stream_read`, `telemetry`. Auth secrets (`auth__domain`, `auth__cookie_domain`, `auth__admin_pass`, `auth__oauth2_proxy_cookie_secret`, `auth__google_client_id`, `auth__google_client_secret`) are separate top-level keys — add them to `csos.enc` via `ansible-vault edit csos.enc --vault-password-file pass.env` before the first `auth`-tagged deploy.
+
+### Access control
+
+Every protected route (HLS, WebRTC, Prometheus, the `gfx` control panel) and Grafana's own login are gated by Casdoor groups. New accounts — Google or manually created — start in **no group** and can't reach anything until an admin adds them to `admin`, `production`, `demo`, or `gfx` via the Casdoor web UI at `https://auth.csos.josefkolar.cz/`. See `roles/auth/README.md` for details.
 
 ### Configuration
 
