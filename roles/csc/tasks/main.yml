@@ -1,0 +1,26 @@
+# Per-tag imports. Playbook-level tag `csc` is inherited by every task, so:
+#   --tags csc         → full deploy (all tasks below)
+#   --tags csc_api     → api only: postgres, db, source, compose, migrate
+#   --tags csc_admin   → admin only: source + install + build_admin + wait
+#   --tags csc_gfx     → gfx only:   source + install + build_gfx   + wait
+# admin/gfx builds fire async and are waited on in wait_builds.yml, so under
+# --tags csc they run in parallel; sub-tag deploys transparently only wait
+# for the build they fired.
+- import_tasks: postgres.yml
+  tags: [csc_api]
+- import_tasks: db.yml
+  tags: [csc_api]
+- import_tasks: source.yml
+  tags: [csc_api, csc_admin, csc_gfx]
+- import_tasks: install.yml
+  tags: [csc_admin, csc_gfx]
+- import_tasks: build_admin.yml
+  tags: [csc_admin]
+- import_tasks: build_gfx.yml
+  tags: [csc_gfx]
+- import_tasks: wait_builds.yml
+  tags: [csc_admin, csc_gfx]
+- import_tasks: compose.yml
+  tags: [csc_api]
+- import_tasks: migrate.yml
+  tags: [csc_api]
