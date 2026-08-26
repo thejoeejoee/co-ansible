@@ -40,6 +40,5 @@
       - docker-compose.yml
   become: true
 
-- name: Bootstrap Casdoor (first run only)
-  ansible.builtin.include_tasks: bootstrap.yml
-  when: not (ansible_local.auth_credentials is defined)
+- name: Reconcile Casdoor state (org, groups, providers, applications)
+  ansible.builtin.include_tasks: reconcile.yml

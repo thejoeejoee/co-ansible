@@ -8,6 +8,7 @@ services:
       origin: "https://{{ auth__domain }}"
       originFrontend: "https://{{ auth__domain }}"
       isDemoMode: "false"
+      aiAssistantUrl: "{{ auth__ai_assistant_url }}"
     volumes:
       - "{{ auth__home_dir }}/data:/data"
     ports:
