@@ -81,7 +81,7 @@ ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --tags stream_proxy
 
 Production secrets live in `csos.enc` (Ansible Vault). Local dev uses plaintext dummy values in `inventory/orb.yaml`.
 
-Secrets are structured as a `credentials` dict with keys: `stream_write`, `stream_read`, `telemetry`. Auth secrets (`auth__domain`, `auth__cookie_domain`, `auth__admin_pass`, `auth__oauth2_proxy_cookie_secret`, `auth__google_client_id`, `auth__google_client_secret`) are separate top-level keys — add them to `csos.enc` via `ansible-vault edit csos.enc --vault-password-file pass.env` before the first `auth`-tagged deploy.
+Secrets are structured as a `credentials` dict with keys: `stream_write`, `stream_read`, `telemetry`. Auth secrets (`auth__domain`, `auth__cookie_domain`, `auth__admin_pass`, `auth__oauth2_proxy_cookie_secret`, `auth__google_client_id`, `auth__google_client_secret`, `auth__github_client_id`, `auth__github_client_secret`) are separate top-level keys — add them to `csos.enc` via `ansible-vault edit csos.enc --vault-password-file pass.env` before the first `auth`-tagged deploy.
 
 ### Access control
 
