@@ -23,6 +23,14 @@
     respond @no_group 403
 }
 
+(require_stream_group) {
+    import require_group (^|,){{ auth__org }}/(admin|production)(,|$)
+}
+
+(require_gfx_group) {
+    import require_group (^|,){{ auth__org }}/(admin|gfx)(,|$)
+}
+
 http://localhost:2019 {
     metrics
 }
@@ -46,14 +54,14 @@ auth.{{ web_proxy__domain }} {
 
     # HLS / WebRTC playback — admin or production group
     handle_path /hls/* {
-        import require_group (^|,){{ auth__org }}/(admin|production)(,|$)
+        import require_stream_group
         reverse_proxy {
             to localhost:8888
             header_down Location ^/ /hls/
         }
     }
     handle_path /webrtc/* {
-        import require_group (^|,){{ auth__org }}/(admin|production)(,|$)
+        import require_stream_group
         reverse_proxy {
             to localhost:8889
             header_down Location ^/ /webrtc/
@@ -158,13 +166,13 @@ gfx.{{ web_proxy__domain }} {
     handle /api/director-favorite {
         @post method POST
         handle @post {
-            import require_group (^|,){{ auth__org }}/(admin|gfx)(,|$)
+            import require_gfx_group
         }
         reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 
     handle {
-        import require_group (^|,){{ auth__org }}/(admin|gfx)(,|$)
+        import require_gfx_group
         reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 }
