@@ -4,23 +4,64 @@
     }
 }
 
+# Reusable SSO gate: forward_auth to oauth2-proxy, then require the caller's
+# X-Auth-Request-Groups header to match the group regex passed as the first
+# snippet argument. Casdoor groups are namespaced "{{ auth__org }}/<name>";
+# new users (Google or manual) start in none of them until an admin adds
+# them via the Casdoor Groups page — see roles/auth/README.md.
+(require_group) {
+    forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+        uri /oauth2/auth
+        header_up X-Real-IP {remote_host}
+        copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+        @unauth status 401
+        handle_response @unauth {
+            redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+        }
+    }
+    @no_group not header_regexp X-Auth-Request-Groups "{args[0]}"
+    respond @no_group 403
+}
+
+(require_stream_group) {
+    import require_group (^|,){{ auth__org }}/(admin|production)(,|$)
+}
+
+(require_gfx_group) {
+    import require_group (^|,){{ auth__org }}/(admin|gfx)(,|$)
+}
+
 http://localhost:2019 {
     metrics
+}
+
+auth.{{ web_proxy__domain }} {
+{% if web_proxy__disable_tls | default(false) %}
+    tls internal
+{% endif %}
+    reverse_proxy localhost:{{ auth__casdoor_port | default(8000) }}
 }
 
 {{ web_proxy__domain }} {
 {% if web_proxy__disable_tls | default(false) %}
     tls internal
 {% endif %}
-    @telemetry path /prometheus/* /grafana/* /webrtc/*
 
+    # oauth2-proxy endpoints — public (must come first)
+    handle /oauth2/* {
+        reverse_proxy localhost:{{ auth__oauth2_proxy_port | default(4180) }}
+    }
+
+    # HLS / WebRTC playback — admin or production group
     handle_path /hls/* {
+        import require_stream_group
         reverse_proxy {
             to localhost:8888
             header_down Location ^/ /hls/
         }
     }
     handle_path /webrtc/* {
+        import require_stream_group
         reverse_proxy {
             to localhost:8889
             header_down Location ^/ /webrtc/
@@ -49,18 +90,13 @@ http://localhost:2019 {
         file_server
     }
 
-    basic_auth @telemetry {
-{% for cred in credentials.telemetry %}
-        {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
-{% endfor %}
-    }
-
-    # handle, do not strip /prometheus
+    # Prometheus — admin only, do not strip /prometheus
     handle /prometheus/* {
+        import require_group (^|,){{ auth__org }}/admin(,|$)
         reverse_proxy localhost:9090
     }
 
-    # handle, strip /grafana
+    # Grafana — native OIDC via Casdoor (see roles/telemetry), no forward_auth
     handle_path /grafana/* {
         reverse_proxy localhost:3000
     }
@@ -129,20 +165,14 @@ gfx.{{ web_proxy__domain }} {
 
     handle /api/director-favorite {
         @post method POST
-        basic_auth @post {
-{% for cred in credentials.gfx %}
-            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
-{% endfor %}
+        handle @post {
+            import require_gfx_group
         }
         reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 
     handle {
-        basic_auth {
-{% for cred in credentials.gfx %}
-            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
-{% endfor %}
-        }
+        import require_gfx_group
         reverse_proxy localhost:{{ gfx__control_host_port }}
     }
 }

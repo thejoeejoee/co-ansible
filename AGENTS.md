@@ -17,6 +17,7 @@ co-ansible/
 │   └── orb.yaml              # Local dev (OrbStack VM, non-root)
 ├── roles/
 │   ├── base/                 # apt, ffmpeg, Docker (via geerlingguy.docker)
+│   ├── auth/                 # Casdoor (OIDC) + oauth2-proxy (Caddy forward_auth gateway)
 │   ├── stream_proxy/         # mediamtx binary + systemd + UFW + config
 │   ├── web_proxy/            # Caddy (via caddy_ansible) + Caddyfile + UFW
 │   │                         # Templates ALSO carry the csc.HOST + gfx.csc.HOST sites
@@ -39,6 +40,7 @@ co-ansible/
 | Add monitoring targets | `roles/telemetry/tasks/main.yml` | `prometheus_scrape_configs` inline |
 | Grafana dashboards | `roles/telemetry/tasks/main.yml` | `grafana_dashboards` list with dashboard IDs |
 | Secrets/passwords | `inventory/*.yml` or `csos.enc` | Per-inventory vars, vault for prod |
+| SSO / group ACLs | `roles/auth/` + `require_group` snippet in `roles/web_proxy/templates/Caddyfile.j2` | Casdoor groups (`{{ auth__org }}/admin` etc.); new users get none by default |
 | csc container / env / compose | `roles/csc/templates/{api.env,docker-compose.yml}.j2` | Prod compose stack for co-stream-control |
 | csc frontend build knobs | `roles/csc/tasks/{install,build_admin,build_gfx}.yml` | Node throwaway containers + pnpm caches |
 | DMR 5G tile stack on/off | `roles/csc/defaults/main.yml` → `csc__dmr5g_enabled` | Adds `otd` + `dmr5g-mirror` services |
@@ -74,11 +76,12 @@ co-ansible/
 
 ## ROLE EXECUTION ORDER
 
-`base` → `stream_proxy` / `telemetry` / `csc` (parallel via `strategy: free`) → `web_proxy`
+`base` → `auth` → `stream_proxy` / `telemetry` / `csc` (parallel via `strategy: free`) → `web_proxy`
 
-- `base` installs Docker (needed by `ta`, `csc`)
-- `web_proxy` reverse-proxies to mediamtx (8888/8889), Prometheus (9090), Grafana (3000), and `csc` (127.0.0.1:8100 for api, static bundles for admin + gfx)
-- `telemetry` scrapes mediamtx (9998) and Caddy (2019) metrics
+- `base` installs Docker (needed by `ta`, `csc`, `auth`)
+- `auth` deploys Casdoor + oauth2-proxy and (first run only) bootstraps the org/groups/applications; `telemetry` (Grafana OIDC) and `web_proxy` (Caddyfile ACLs) both consume its output, so it must run before them
+- `web_proxy` reverse-proxies to mediamtx (8888/8889), Prometheus (9090), Grafana (3000), Casdoor (8000), oauth2-proxy (4180), and `csc` (127.0.0.1:8100 for api, static bundles for admin + gfx)
+- `telemetry` scrapes mediamtx (9998) and Caddy (2019) metrics; Grafana itself logs in via Casdoor OIDC
 - `csc` installs PostgreSQL 16 natively, deploys the FastAPI container, builds admin + gfx as static SPAs, and (optionally) runs the ADR-044 DMR 5G tile stack (`otd` + `dmr5g-mirror`)
 
 ## COMMANDS
@@ -112,3 +115,8 @@ ansible-galaxy install -r requirements.yml
 - **csc api uses a single, workspace-aware `api/Dockerfile`** (ADR-045 in co-stream-control): dev and prod share the same image — the compose files differ only in the CMD override (`--reload` in dev, `--root-path /api --workers 1` in prod). The compose ``context`` is the whole repo root because the API image needs the workspace root pyproject + lockfile + `packages/py-shared` sources at build time.
 - **DMR 5G stack default-on**: `csc__dmr5g_enabled: true`. Adds ~1–2 GB of tiles per Czech event over time on the shared `otd_tiles` volume. Set to `false` in inventory for deployments that don't handle Czech events — the api cascades to Copernicus GLO-30 with no config change on the api side.
 - **README is stale in one spot** — references `playbooks/templates/` which no longer exists (moved to `roles/stream_proxy/templates/`).
+- **Casdoor's `app-built-in` client secret is publicly readable** via unauthenticated `GET /api/get-application?id=admin/app-built-in` (Casdoor's own design — the app exists so anyone can look up its OIDC metadata). `roles/auth/tasks/reconcile.yml` deliberately authenticates with a `built-in/admin` session cookie instead, never with that client secret.
+- **Casdoor's default `built-in/admin` password is `123`** on first boot of an empty SQLite volume. `reconcile.yml` rotates it to `auth__admin_pass` via `/api/set-password` on that first run — don't skip that step if hand-rolling a Casdoor deploy outside this role.
+- **Casdoor `groups` claim is namespaced `{{ auth__org }}/<name>`**, not bare group names — Caddyfile ACLs and Grafana's `role_attribute_path` must match on the prefixed form.
+- **`roles/auth/tasks/reconcile.yml` runs on every deploy, not just the first** — `defaults/main.yml`'s `auth__groups`/`auth__providers`/`auth__applications` are the declarative source of truth; editing them and redeploying is enough to change Casdoor's state (see `roles/auth/README.md`).
+- **Casdoor bug: `Application.IsPasswordEnabled()` ignores the "Hide password" signin-method rule** — it only checks whether *any* entry named "Password" exists. The only way to actually disable password login server-side is an explicitly empty `signinMethods` list (falls through to the `enablePassword` bool, which the buggy check doesn't skip). Don't "fix" this by adding a Password entry with `rule: "Hide password"` — it looks right in the UI but doesn't block a direct `/api/login` call.

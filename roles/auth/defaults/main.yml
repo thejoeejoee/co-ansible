@@ -1,0 +1,64 @@
+auth__home_dir: /opt/auth
+auth__casdoor_port: 8000
+auth__oauth2_proxy_port: 4180
+auth__casdoor_image: casbin/casdoor:3.159.0
+auth__oauth2_proxy_image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.2
+
+# Set to "" (default) to hide Casdoor's floating "AI Assistant" widget —
+# it otherwise embeds an iframe to an external casbin.org-hosted service.
+auth__ai_assistant_url: ""
+
+# Casdoor organization + groups. New users (Google or GitHub) land in the
+# organization with zero groups — an admin must add them to one of these via
+# the Casdoor web UI (Groups page) before Caddy's forward_auth ACLs let them
+# through. This is what satisfies the default-deny requirement.
+auth__org: csos
+auth__org_display_name: CSOS
+auth__groups:
+  - { name: admin, display_name: Admin }
+  - { name: production, display_name: Production }
+  - { name: demo, display_name: Demo }
+  - { name: gfx, display_name: Gfx }
+
+# Identity providers. Manual (password) account creation and login are
+# disabled on every application below — these OAuth providers are the only
+# way in. Each entry's client_id/client_secret must come from inventory.
+auth__providers:
+  - name: google
+    type: Google
+    client_id: "{{ auth__google_client_id }}"
+    client_secret: "{{ auth__google_client_secret }}"
+  - name: github
+    type: GitHub
+    client_id: "{{ auth__github_client_id }}"
+    client_secret: "{{ auth__github_client_secret }}"
+
+# OIDC applications. Every provider in auth__providers above is attached to
+# each of these with signupGroup left empty (default-deny) — see
+# tasks/bootstrap.yml.
+auth__applications:
+  - name: oauth2-proxy
+    redirect_uri: "https://{{ web_proxy__domain }}/oauth2/callback"
+  - name: grafana
+    redirect_uri: "https://{{ web_proxy__domain }}/grafana/login/generic_oauth"
+
+# Login page branding, applied at the organization level so it covers every
+# application's sign-in page uniformly.
+auth__theme:
+  color_primary: "#FF7A00"
+  border_radius: 4
+
+# auth__admin_pass replaces Casdoor's well-known default built-in/admin
+# password ("123") on first bootstrap. Provide a real value via inventory.
+auth__admin_pass: changeme-in-inventory
+
+auth__provision_test_users: false
+
+# Placeholder client credentials for the very first oauth2-proxy.cfg render,
+# before tasks/bootstrap.yml creates the real Casdoor applications and
+# re-renders with actual values. oauth2-proxy will simply fail to reach the
+# (not-yet-existing) OIDC client until bootstrap completes.
+auth__oauth2_proxy_client_id: pending-bootstrap
+auth__oauth2_proxy_client_secret: pending-bootstrap
+auth__grafana_oidc_client_id: pending-bootstrap
+auth__grafana_oidc_client_secret: pending-bootstrap

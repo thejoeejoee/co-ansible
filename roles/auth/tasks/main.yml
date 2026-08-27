@@ -1,0 +1,44 @@
+- name: Prepare {{ auth__home_dir }}/ directory
+  ansible.builtin.file:
+    path: "{{ auth__home_dir }}/"
+    state: directory
+  become: true
+
+- name: Prepare {{ auth__home_dir }}/data directory
+  ansible.builtin.file:
+    path: "{{ auth__home_dir }}/data"
+    state: directory
+    mode: '0777'
+  become: true
+
+- name: Render docker-compose.yml to {{ auth__home_dir }}/docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ auth__home_dir }}/docker-compose.yml"
+  become: true
+
+- name: Load credentials from local facts (subsequent runs)
+  ansible.builtin.set_fact:
+    auth__oauth2_proxy_client_id: "{{ ansible_local.auth_credentials.oauth2_proxy.client_id }}"
+    auth__oauth2_proxy_client_secret: "{{ ansible_local.auth_credentials.oauth2_proxy.client_secret }}"
+    auth__grafana_oidc_client_id: "{{ ansible_local.auth_credentials.grafana.client_id }}"
+    auth__grafana_oidc_client_secret: "{{ ansible_local.auth_credentials.grafana.client_secret }}"
+  when: ansible_local.auth_credentials is defined
+  no_log: true
+
+- name: Render oauth2-proxy config
+  ansible.builtin.template:
+    src: oauth2-proxy.cfg.j2
+    dest: "{{ auth__home_dir }}/oauth2-proxy.cfg"
+    mode: '0644'
+  become: true
+
+- name: Create and start auth services
+  community.docker.docker_compose_v2:
+    project_src: "{{ auth__home_dir }}/"
+    files:
+      - docker-compose.yml
+  become: true
+
+- name: Reconcile Casdoor state (org, groups, providers, applications)
+  ansible.builtin.include_tasks: reconcile.yml

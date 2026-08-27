@@ -1,0 +1,42 @@
+- name: "Check for existing {{ _ensure_label }}"
+  ansible.builtin.uri:
+    url: "http://localhost:{{ auth__casdoor_port }}{{ _ensure_get_path }}"
+    headers:
+      Cookie: "{{ _casdoor_cookie }}"
+    status_code: 200
+  register: _ensure_check
+  no_log: true
+
+- name: "Create {{ _ensure_label }}"
+  ansible.builtin.uri:
+    url: "http://localhost:{{ auth__casdoor_port }}{{ _ensure_add_path }}"
+    method: POST
+    headers:
+      Cookie: "{{ _casdoor_cookie }}"
+    body_format: json
+    body: "{{ _ensure_body }}"
+    status_code: 200
+  when: _ensure_check.json.data is none
+  no_log: true
+
+# Only runs when the call site sets _ensure_update_path — that's the
+# opt-in for "this object's fields get reconciled on every run" (true IaC:
+# editing defaults/main.yml and re-running the playbook is enough). Call
+# sites that omit it (the JWT cert) are create-once-only on purpose:
+# regenerating it would invalidate every issued token.
+- name: "Update {{ _ensure_label }}"
+  ansible.builtin.uri:
+    url: >-
+      http://localhost:{{ auth__casdoor_port }}{{ _ensure_update_path }}{{
+        ('&columns=' ~ (_ensure_update_columns | join(','))) if _ensure_update_columns is defined else ''
+      }}
+    method: POST
+    headers:
+      Cookie: "{{ _casdoor_cookie }}"
+    body_format: json
+    body: "{{ _ensure_body }}"
+    status_code: 200
+  when:
+    - _ensure_update_path is defined
+    - _ensure_check.json.data is not none
+  no_log: true

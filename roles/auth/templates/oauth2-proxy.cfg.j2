@@ -1,0 +1,32 @@
+provider = "oidc"
+oidc_issuer_url = "https://{{ auth__domain }}"
+client_id = "{{ auth__oauth2_proxy_client_id }}"
+client_secret = "{{ auth__oauth2_proxy_client_secret }}"
+cookie_secret = "{{ auth__oauth2_proxy_cookie_secret }}"
+cookie_domains = ["{{ auth__cookie_domain }}"]
+cookie_secure = true
+email_domains = ["*"]
+set_xauthrequest = true
+pass_access_token = true
+scope = "openid profile email"
+redirect_url = "https://{{ web_proxy__domain }}/oauth2/callback"
+upstreams = ["static://202"]
+skip_provider_button = true
+oidc_groups_claim = "groups"
+whitelist_domains = ["{{ auth__cookie_domain }}"]
+http_address = "0.0.0.0:4180"
+
+# oidc_issuer_url above is only used to validate the "iss" claim on tokens
+# (it must match Casdoor's public `origin`). The actual server-to-server
+# calls below go over the compose network directly to the casdoor
+# container — going out through the public https://{{ auth__domain }}
+# hostname and back in through Caddy is unnecessary for calls oauth2-proxy
+# makes itself, and fails outright in OrbStack, where a self-signed cert
+# behind its transparent *.orb.local TLS proxy gets rejected regardless of
+# ssl_insecure_skip_verify (that setting only affects oauth2-proxy's own Go
+# HTTP client, not OrbStack's intercepting proxy in front of it).
+skip_oidc_discovery = true
+login_url = "https://{{ auth__domain }}/login/oauth/authorize"
+redeem_url = "http://casdoor:8000/api/login/oauth/access_token"
+profile_url = "http://casdoor:8000/api/userinfo"
+oidc_jwks_url = "http://casdoor:8000/.well-known/jwks"
