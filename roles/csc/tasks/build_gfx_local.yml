@@ -1,0 +1,21 @@
+# Fired async alongside the admin build — see build_admin_local.yml.
+#
+# NUXT_PUBLIC_API_BASE is absolute here because gfx serves cross-origin from
+# gfx.csc.HOST and must hit csc.HOST/api directly. Baked in at build time
+# (ssr:false), so the deploy target's domain has to be known here — which it
+# is, from the same inventory that drives web_proxy.
+- name: Build gfx SPA bundle (control node, async)
+  ansible.builtin.command:
+    argv:
+      - "{{ csc__pnpm_bin }}"
+      - --filter
+      - ./gfx
+      - build
+    chdir: "{{ csc__source_dir }}"
+  environment:
+    NUXT_PUBLIC_API_BASE: "https://csc.{{ web_proxy__domain }}/api"
+  delegate_to: localhost
+  async: 900
+  poll: 0
+  register: csc_gfx_build_job
+  changed_when: true

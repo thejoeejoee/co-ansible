@@ -158,6 +158,21 @@ csc.{{ web_proxy__domain }} {
             flush_interval -1
         }
     }
+    # Public assets (ADR-046 heightmaps + the GPS-Seuranta raster proxy).
+    # Both are fetched cross-origin by the gfx overlay on gfx.csc.HOST,
+    # which sends no credentials — behind the basic_auth below they 401,
+    # and a 401 carries no Access-Control-Allow-Origin, so the browser
+    # reports it as a CORS failure. FastAPI already returns these with
+    # `Access-Control-Allow-Origin: *` (routes/gfx_assets.py,
+    # routes/gps_seuranta.py); Caddy just has to stay out of the way.
+    # Scoped to map.jpg, not all of /api/gps-seuranta/*, because that
+    # namespace also holds admin-only POST routes (autolocate).
+    @csc_public_assets path /api/gfx-assets/* /api/gps-seuranta/*/map.jpg
+    handle @csc_public_assets {
+        uri strip_prefix /api
+        reverse_proxy localhost:{{ csc__api_port }}
+    }
+
     handle /api/* {
         # API proxy: strip /api, basic_auth, forward to api container.
         # FastAPI is started with --root-path /api so absolute URLs it
