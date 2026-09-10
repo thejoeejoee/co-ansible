@@ -1,0 +1,23 @@
+# Fire the admin build asynchronously (poll:0 returns immediately) so it runs
+# alongside the gfx build — the two Nuxt apps have separate .nuxt/.output trees
+# and only ever read from the shared node_modules, so they don't collide.
+#
+# ssr:false means NUXT_PUBLIC_API_BASE is baked in at build time, not read at
+# runtime; admin is served same-origin from csc.HOST so the relative /api wins.
+# The bundle lands in {{ csc__source_dir }}/admin/.output/public and is shipped
+# to the target by publish_bundles.yml once the wait clears.
+- name: Build admin SPA bundle (control node, async)
+  ansible.builtin.command:
+    argv:
+      - "{{ csc__pnpm_bin }}"
+      - --filter
+      - ./admin
+      - build
+    chdir: "{{ csc__source_dir }}"
+  environment:
+    NUXT_PUBLIC_API_BASE: /api
+  delegate_to: localhost
+  async: 900
+  poll: 0
+  register: csc_admin_build_job
+  changed_when: true

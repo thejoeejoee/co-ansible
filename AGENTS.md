@@ -40,7 +40,8 @@ co-ansible/
 | Grafana dashboards | `roles/telemetry/tasks/main.yml` | `grafana_dashboards` list with dashboard IDs |
 | Secrets/passwords | `inventory/*.yml` or `csos.enc` | Per-inventory vars, vault for prod |
 | csc container / env / compose | `roles/csc/templates/{api.env,docker-compose.yml}.j2` | Prod compose stack for co-stream-control |
-| csc frontend build knobs | `roles/csc/tasks/{install,build_admin,build_gfx}.yml` | Node throwaway containers + pnpm caches |
+| csc frontend build knobs | `roles/csc/tasks/build_{admin,gfx}_{local,remote}.yml` | Local = pnpm in the checkout; remote = node throwaway containers |
+| Where admin/gfx get built | `roles/csc/defaults/main.yml` → `csc__build_remote` | Control node by default; `--tags csc,remote_build` flips it |
 | DMR 5G tile stack on/off | `roles/csc/defaults/main.yml` → `csc__dmr5g_enabled` | Adds `otd` + `dmr5g-mirror` services |
 | Enable legacy gfx role | `playbooks/setup.yml` — uncomment the `gfx` import | Superseded by csc's own gfx SPA |
 | Enable Tally Arbiter | `playbooks/setup.yml` — uncomment the `ta` role import | Currently off |
@@ -53,13 +54,16 @@ co-ansible/
 - **Galaxy roles wrapped in `block: become: true`**: required because `include_role` doesn't propagate `become` to Galaxy role tasks
 - **Caddy config managed outside Galaxy role**: `caddy_config_update: false` disables Galaxy's config write; own `Deploy Caddyfile` task with `validate` + `notify: Restart caddy`
 - **Restart over reload for Caddy**: TLS/listener changes require restart, not reload (SO_REUSEPORT limitation)
-- **Sub-tag deploys on csc**: `csc_api`, `csc_admin`, `csc_gfx` compose — see `roles/csc/README.md`
+- **Sub-tag deploys on csc**: `csc_db`, `csc_api`, `csc_admin`, `csc_gfx`, `csc_otd` compose freely; each compose call is service-scoped so one component redeploys without touching the others. `csc_db` is NOT implied by `csc_api` (fresh VMs need `--tags csc`) — see `roles/csc/README.md`
+- **`remote_build` is a switch tag, not a selector**: it selects no tasks of its own; it only makes `csc__build_remote` true via `ansible_run_tags`. Always pair it with a real tag (`--tags csc,remote_build`). Same pattern applies to any future tag-as-flag
+- **Two-branch task files use `include_tasks` + `when`, never `import_tasks` + `when`**: both branches register the same variable (`csc_admin_build_job`), and a *skipped import* still overwrites that register with a skip result. A skipped include never runs its children at all
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
 - **Never use Caddy reload for TLS changes** — must restart; reload only applies route/handler changes
 - **Never deploy Caddyfile without validation** — `caddy validate --config %s --adapter caddyfile` in copy task prevents broken configs from killing Caddy on restart
 - **Do not add `become: true` to individual Galaxy tasks** — wrap the entire `include_role` in a `block` with `become: true`
+- **Don't add `become: true` to the control-node build tasks** — they're `delegate_to: localhost` and would sudo on the operator's own laptop
 - **Never raise `csc__api_workers` above 1** — the API is single-process by design (ADR-023 in co-stream-control). Its SSE fan-out, admin invalidation bus, and background OResults pollers/replay ticker are in-memory per-process singletons. `workers > 1` silently drops gfx frames and double-runs pollers.
 
 ## INVENTORY DIFFERENCES
@@ -79,7 +83,7 @@ co-ansible/
 - `base` installs Docker (needed by `ta`, `csc`)
 - `web_proxy` reverse-proxies to mediamtx (8888/8889), Prometheus (9090), Grafana (3000), and `csc` (127.0.0.1:8100 for api, static bundles for admin + gfx)
 - `telemetry` scrapes mediamtx (9998) and Caddy (2019) metrics
-- `csc` installs PostgreSQL 16 natively, deploys the FastAPI container, builds admin + gfx as static SPAs, and (optionally) runs the ADR-044 DMR 5G tile stack (`otd` + `dmr5g-mirror`)
+- `csc` installs PostgreSQL 16 natively, deploys the FastAPI container, builds admin + gfx as static SPAs (on the control node by default), and (optionally) runs the ADR-044 DMR 5G tile stack (`otd` + `dmr5g-mirror`)
 
 ## COMMANDS
 
@@ -99,6 +103,12 @@ ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
   --tags csc,web_proxy -e @csos.enc --vault-password-file .pass.env
 ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
   --tags csc_admin -e @csos.enc --vault-password-file .pass.env
+# api container only (rebuild + recreate + alembic), leaves otd/mirror running
+ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
+  --tags csc_api -e @csos.enc --vault-password-file .pass.env
+# build admin/gfx ON THE VM instead of locally (switch tag, needs a real tag too)
+ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
+  --tags csc,remote_build -e @csos.enc --vault-password-file .pass.env
 
 # Install Galaxy dependencies
 ansible-galaxy install -r requirements.yml
@@ -110,5 +120,6 @@ ansible-galaxy install -r requirements.yml
 - **mediamtx config is 93 lines** — the largest template. Stream slots (paths) are hardcoded there, not dynamically generated.
 - **Grafana `root_url`** in telemetry role derives from `web_proxy__domain` — cross-role dependency on `web_proxy` inventory var.
 - **csc api uses a single, workspace-aware `api/Dockerfile`** (ADR-045 in co-stream-control): dev and prod share the same image — the compose files differ only in the CMD override (`--reload` in dev, `--root-path /api --workers 1` in prod). The compose ``context`` is the whole repo root because the API image needs the workspace root pyproject + lockfile + `packages/py-shared` sources at build time.
+- **admin/gfx build on the control node by default** (`csc__build_remote: "{{ 'remote_build' in ansible_run_tags }}"`). `pnpm --filter ./<app> build` runs in `csc__source_dir` — the *actual* checkout, so `.output/` there gets overwritten and gfx is baked against the deploy target's domain. Only `.output/public/` is rsynced over (`--delete`). Docker images are deliberately outside this switch: they're linux/amd64 and cross-building them on an arm64 laptop is slower than the VM building natively.
 - **DMR 5G stack default-on**: `csc__dmr5g_enabled: true`. Adds ~1–2 GB of tiles per Czech event over time on the shared `otd_tiles` volume. Set to `false` in inventory for deployments that don't handle Czech events — the api cascades to Copernicus GLO-30 with no config change on the api side.
 - **README is stale in one spot** — references `playbooks/templates/` which no longer exists (moved to `roles/stream_proxy/templates/`).

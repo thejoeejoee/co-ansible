@@ -1,0 +1,50 @@
+# Control-node builds only: the finished bundles are sitting in the source
+# checkout, so ship them to the dist dirs Caddy serves. Under `remote_build`
+# the builders already wrote straight into those dirs and this whole file
+# no-ops.
+#
+# `delete: true` is what makes this an exact mirror rather than an overlay —
+# it's the rsync equivalent of the remote builder's `find /out -delete` before
+# the copy, and without it a renamed hashed chunk would linger forever.
+# `rsync_opts` keeps the transfer to the delta, so a bundle where only the app
+# chunk changed moves a few hundred KB.
+#
+# owner/group are dropped deliberately: the control node's uid/gid mean nothing
+# on the target, and preserving them (rsync -a does, when pushing as root)
+# would leave the bundle owned by a uid that doesn't exist there. Without them
+# the files land owned by the ssh user, exactly as the remote builder left them.
+#
+# The `is defined` guards mirror wait_builds.yml: a build skipped by tag has no
+# job register and therefore nothing to publish.
+
+- name: Publish admin bundle to {{ csc__admin_dist }}
+  synchronize:
+    src: "{{ csc__source_dir }}/admin/.output/public/"
+    dest: "{{ csc__admin_dist }}/"
+    mode: push
+    delete: true
+    owner: false
+    group: false
+    rsync_opts:
+      - "--omit-dir-times"
+  delegate_to: localhost
+  when:
+    - not csc__build_remote | bool
+    - csc_admin_build_job is defined
+    - csc_admin_build_job.ansible_job_id is defined
+
+- name: Publish gfx bundle to {{ csc__gfx_dist }}
+  synchronize:
+    src: "{{ csc__source_dir }}/gfx/.output/public/"
+    dest: "{{ csc__gfx_dist }}/"
+    mode: push
+    delete: true
+    owner: false
+    group: false
+    rsync_opts:
+      - "--omit-dir-times"
+  delegate_to: localhost
+  when:
+    - not csc__build_remote | bool
+    - csc_gfx_build_job is defined
+    - csc_gfx_build_job.ansible_job_id is defined

@@ -1,6 +1,11 @@
-- name: Create and start csc services
+# Imported once per component with `csc_compose_services` set (see main.yml).
+# Scoping the up to a service subset is what keeps `--tags csc_api` from
+# rebuilding the DMR images — and `--tags csc_otd` from bouncing the api.
+# Services not named here keep running untouched.
+- name: Create and start csc services ({{ csc_compose_services | join(', ') }})
   community.docker.docker_compose_v2:
     project_src: "{{ csc__home_dir }}/"
     files:
       - docker-compose.yml
+    services: "{{ csc_compose_services }}"
     build: always

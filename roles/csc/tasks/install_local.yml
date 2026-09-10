@@ -1,0 +1,16 @@
+# One `pnpm install` in the checkout itself — no throwaway container, no
+# rsynced copy, no separate store. The dev's own node_modules and pnpm store
+# are the cache, so on a machine that already runs `pnpm dev` this is a no-op
+# in a couple of seconds.
+#
+# --frozen-lockfile mirrors the remote builder: the deployed bundle is built
+# from exactly what pnpm-lock.yaml pins, never from a drifted local tree.
+- name: Install workspace deps (control node, {{ csc__source_dir }})
+  ansible.builtin.command:
+    argv:
+      - "{{ csc__pnpm_bin }}"
+      - install
+      - --frozen-lockfile
+    chdir: "{{ csc__source_dir }}"
+  delegate_to: localhost
+  changed_when: true
