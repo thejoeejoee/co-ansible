@@ -42,5 +42,27 @@
         apt-get install -y --no-install-recommends -qq python3 make g++ ca-certificates
         corepack enable
         pnpm config set store-dir /pnpm-store
-        pnpm install --frozen-lockfile
+
+        # nm-cache/** deliberately survives between deploys, so this install
+        # mutates a tree that was linked from an *older* pnpm-lock.yaml. That
+        # reuse is what makes redeploys fast, and it is also the one way this
+        # step fails: co-stream-control/.npmrc sets `node-linker=hoisted`, so
+        # the tree is flat and a package's install script resolves its siblings
+        # by plain node resolution — version-blind. When a dep is bumped, an
+        # install script can therefore still see the copy it is replacing.
+        # esbuild does exactly that (it execs @esbuild/<platform>/bin/esbuild
+        # and asserts the reported version equals its own) and hard-fails with
+        # `Expected "0.28.2" but got "0.28.1"`.
+        #
+        # Recover by emptying the caches and installing from scratch. The pnpm
+        # store is left alone, so the retry is mostly hardlinks plus the native
+        # rebuilds. node_modules are bind-mount points and cannot be removed
+        # from inside the container, so clear them in place.
+        pnpm install --frozen-lockfile || {
+          echo "pnpm install failed against the reused nm-cache; retrying from a clean tree"
+          for nm in node_modules admin/node_modules gfx/node_modules packages/shared/node_modules; do
+            find "$nm" -mindepth 1 -delete
+          done
+          pnpm install --frozen-lockfile
+        }
   changed_when: true
