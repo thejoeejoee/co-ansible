@@ -165,6 +165,15 @@ Caveats for the local path:
   absolute path.
 - `--frozen-lockfile` still applies: the bundle is built from what
   `pnpm-lock.yaml` pins, not from a drifted local tree.
+- If that install fails, the role **deletes the checkout's `node_modules`**
+  (root, `admin`, `gfx`, `packages/shared`) and installs once more. A
+  long-lived `node_modules` linked from an older `pnpm-lock.yaml` is the
+  common cause — `.npmrc` sets `node-linker=hoisted`, so the tree is flat and
+  a package's install script can still resolve the very version it is
+  replacing (esbuild fails this way: `Expected "0.28.2" but got "0.28.1"`).
+  Only the linked tree goes; the pnpm store is untouched, so the reinstall is
+  mostly hardlinks. A missing `pnpm` is caught by its own task first, so it
+  can never trigger the wipe.
 
 Docker images (`api`, `otd`, `dmr5g-mirror`) are **not** covered by this switch —
 they always build on the target. They're linux/amd64; emulating that on an
