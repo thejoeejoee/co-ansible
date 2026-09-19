@@ -38,8 +38,9 @@
           auth.anonymous:
             enabled: true
             org_role: Viewer
-          panels:
-            disable_sanitize_html: true
+          # Security review L1: HTML sanitization left enabled (Grafana default).
+          # With anonymous public Viewer access, disabling it widened the stored
+          # XSS surface for no functional need here.
           database:
             type: sqlite3
             path: grafana.db

@@ -13,6 +13,12 @@
     src: "{{ csc__source_dir }}/"
     dest: "{{ csc__home_dir }}/src/"
     mode: push
+    # Security review L6: don't preserve the control node's uid/gid (rsync
+    # archive default), which left the tree owned by a nonexistent 501:staff
+    # on the target. Files land owned by the ssh user (root on prod), matching
+    # publish_bundles.yml.
+    owner: false
+    group: false
     rsync_opts:
       - "--exclude=.git"
       - "--exclude=.venv"
@@ -38,3 +44,6 @@
   ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ csc__home_dir }}/docker-compose.yml"
+    # Security review M3: the compose file embeds the PG password in the
+    # dmr5g-mirror CSC_DATABASE_URL; keep it non-world-readable like api.env.
+    mode: "0600"

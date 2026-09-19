@@ -7,11 +7,18 @@
     update_cache: true
     state: present
 
-- name: Ensure PostgreSQL listens on all interfaces (access gated by pg_hba + UFW)
+# Security review M1: bind only to loopback + the docker0 host-gateway
+# (172.17.0.1) instead of '*'. The api and dmr5g-mirror containers reach PG
+# via `host.docker.internal:host-gateway`, which docker resolves to the
+# docker0 bridge gateway (172.17.0.1) regardless of the container's own
+# network — verified with `docker exec csc-api-1 getent hosts
+# host.docker.internal`. This keeps PG off the public interface; pg_hba + UFW
+# remain as the inner layers.
+- name: Ensure PostgreSQL listens on loopback + docker0 host-gateway only
   ansible.builtin.lineinfile:
     path: "/etc/postgresql/{{ csc__pg_version }}/main/postgresql.conf"
     regexp: '^#?\s*listen_addresses\s*='
-    line: "listen_addresses = '*'"
+    line: "listen_addresses = '127.0.0.1,172.17.0.1'"
     state: present
   notify: Restart postgresql
 

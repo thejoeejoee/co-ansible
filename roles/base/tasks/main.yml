@@ -4,6 +4,24 @@
     upgrade: yes
     update_cache: yes
     cache_valid_time: 86400
+
+# Security review H2: remove the leftover cloud-init `ubuntu` account. It had
+# `NOPASSWD:ALL` sudo (via /etc/sudoers.d/90-cloud-init-users) plus an
+# authorized SSH key — a second, password-not-required, root-equivalent path.
+# Legitimate access is via root/key-based login only.
+- name: Remove leftover cloud-init ubuntu user
+  become: true
+  ansible.builtin.user:
+    name: ubuntu
+    state: absent
+    remove: true
+    force: true
+
+- name: Remove cloud-init NOPASSWD sudoers drop-in
+  become: true
+  ansible.builtin.file:
+    path: /etc/sudoers.d/90-cloud-init-users
+    state: absent
 - name: Install required packages
   become: true
   apt:
@@ -23,6 +41,15 @@
           log-opts:
             max-size: "100m"
             max-file: "5"
+          # Security review M1: pin the docker0 bridge address so the
+          # host-gateway (what `host.docker.internal` resolves to) is a fixed
+          # 172.17.0.1 across daemon restarts / upgrades / network recreation.
+          # PostgreSQL is bound to exactly this address (roles/csc postgres.yml),
+          # so the two must never drift. 172.17.0.1/16 is Docker's own default,
+          # so pinning it here is a no-op on the current host — it just removes
+          # the reliance on that default staying the default.
+          bip: "172.17.0.1/16"
+          host-gateway-ip: "172.17.0.1"
   become: true
 
 - name: Shorten systemd-journald retention
