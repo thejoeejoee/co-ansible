@@ -1,0 +1,68 @@
+# One `pnpm install` in the checkout itself — no throwaway container, no
+# rsynced copy, no separate store. The dev's own node_modules and pnpm store
+# are the cache, so on a machine that already runs `pnpm dev` this is a no-op
+# in a couple of seconds.
+#
+# --frozen-lockfile mirrors the remote builder: the deployed bundle is built
+# from exactly what pnpm-lock.yaml pins, never from a drifted local tree.
+
+# Checked separately so a pnpm that isn't on the PATH ansible-playbook
+# inherited (see README "Caveats for the local path") fails here, loudly, and
+# never reaches the recovery below — "pnpm is missing" must not be mistaken for
+# "the tree is drifted" and cost the dev their node_modules.
+- name: Check pnpm is reachable on the control node
+  ansible.builtin.command:
+    argv:
+      - "{{ csc__pnpm_bin }}"
+      - --version
+  delegate_to: localhost
+  changed_when: false
+
+# Soft-failed on purpose: the checkout's node_modules is long-lived and was
+# linked from whatever pnpm-lock.yaml was current the last time the dev
+# installed, and .npmrc sets `node-linker=hoisted`, so that tree is flat and a
+# package's install script resolves its siblings by plain node resolution —
+# version-blind. After a dep bump an install script can therefore still find
+# the copy it is replacing. esbuild does exactly that (it execs
+# @esbuild/<platform>/bin/esbuild and asserts the reported version equals its
+# own) and hard-fails with `Expected "0.28.2" but got "0.28.1"`. The two tasks
+# below relink from scratch, which is the only reliable fix.
+- name: Install workspace deps (control node, {{ csc__source_dir }})
+  ansible.builtin.command:
+    argv:
+      - "{{ csc__pnpm_bin }}"
+      - install
+      - --frozen-lockfile
+    chdir: "{{ csc__source_dir }}"
+  delegate_to: localhost
+  changed_when: true
+  failed_when: false
+  register: csc__install_local
+
+# Only the linked tree goes. The pnpm store keeps every tarball plus the
+# side-effects cache for the native modules, so the reinstall below is mostly
+# hardlinks — seconds, not a cold install.
+- name: Drop the drifted node_modules trees under {{ csc__source_dir }}
+  ansible.builtin.file:
+    path: "{{ csc__source_dir }}/{{ item }}"
+    state: absent
+  loop:
+    - node_modules
+    - admin/node_modules
+    - gfx/node_modules
+    - packages/shared/node_modules
+  delegate_to: localhost
+  when: csc__install_local.rc != 0
+
+# No failed_when here: if a clean tree still can't satisfy the lockfile, the
+# lockfile is what's wrong and the deploy must stop.
+- name: Re-install workspace deps from a clean tree
+  ansible.builtin.command:
+    argv:
+      - "{{ csc__pnpm_bin }}"
+      - install
+      - --frozen-lockfile
+    chdir: "{{ csc__source_dir }}"
+  delegate_to: localhost
+  changed_when: true
+  when: csc__install_local.rc != 0

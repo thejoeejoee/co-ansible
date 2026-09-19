@@ -89,13 +89,8 @@ http://localhost:2019 {
             <ul>
                 <li><a href="/grafana/">Grafana</a> <small>— monitoring dashboards</small></li>
                 <li><a href="/prometheus/">Prometheus</a> <small>— metrics</small></li>
-                <li><a href="/hls/">HLS player</a> <small>— stream playback</small></li>
-                <li><a href="https://gfx.{{ web_proxy__domain }}/">GFX Control</a> <small>— graphics control panel</small></li>
-                <li><a href="{{ gfx__github_pages_url }}">GFX Overlay</a> <small>— stream overlay (GitHub Pages)</small></li>
             </ul>
             <h2 style="font-size:1rem;margin-top:2rem;">OBS Browser Source</h2>
-            <input readonly value="{{ gfx__github_pages_url }}?sse=https://gfx.{{ web_proxy__domain }}/_sse/" onclick="this.select()" style="width:100%;padding:.4rem;font:inherit;font-size:.85rem;border:1px solid #ccc;border-radius:4px;color:#333;background:#f8f8f8;cursor:text;"
-            >
         </body>
         </html>
         HTML
@@ -117,32 +112,97 @@ ta.{{ web_proxy__domain }}, tally.{{ web_proxy__domain }} {
     reverse_proxy localhost:4455
 }
 
-gfx.{{ web_proxy__domain }} {
+{#gfx.{{ web_proxy__domain }} {#}
+{#{% if web_proxy__disable_tls | default(false) %}#}
+{#    tls internal#}
+{#{% endif %}#}
+{#    handle /_sse/* {#}
+{#        header Cache-Control "no-cache, no-transform"#}
+{#        header X-Accel-Buffering "no"#}
+{#        reverse_proxy localhost:{{ gfx__proxy_host_port }} {#}
+{#            flush_interval -1#}
+{#        }#}
+{#    }#}
+{##}
+{#    handle /api/director-favorite {#}
+{#        @post method POST#}
+{#        basic_auth @post {#}
+{#{% for cred in credentials.gfx %}#}
+{#            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}#}
+{#{% endfor %}#}
+{#        }#}
+{#        reverse_proxy localhost:{{ gfx__control_host_port }}#}
+{#    }#}
+{##}
+{#    handle {#}
+{#        basic_auth {#}
+{#{% for cred in credentials.gfx %}#}
+{#            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}#}
+{#{% endfor %}#}
+{#        }#}
+{#        reverse_proxy localhost:{{ gfx__control_host_port }}#}
+{#    }#}
+{#}#}
+
+csc.{{ web_proxy__domain }} {
 {% if web_proxy__disable_tls | default(false) %}
     tls internal
 {% endif %}
-    handle /_sse/* {
-        reverse_proxy localhost:{{ gfx__proxy_host_port }} {
+    handle /api/gfx/stream/* {
+        # Public SSE (ADR-012): slot bus, no auth, no proxy buffering.
+        # Strip /api so FastAPI matches its native route /gfx/stream/{slug}.
+        header Cache-Control "no-cache, no-transform"
+        header X-Accel-Buffering "no"
+        uri strip_prefix /api
+        reverse_proxy localhost:{{ csc__api_port }} {
             flush_interval -1
         }
     }
-
-    handle /api/director-favorite {
-        @post method POST
-        basic_auth @post {
-{% for cred in credentials.gfx %}
-            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
-{% endfor %}
-        }
-        reverse_proxy localhost:{{ gfx__control_host_port }}
+    # Public assets (ADR-046 heightmaps + the GPS-Seuranta raster proxy).
+    # Both are fetched cross-origin by the gfx overlay on gfx.csc.HOST,
+    # which sends no credentials — behind the basic_auth below they 401,
+    # and a 401 carries no Access-Control-Allow-Origin, so the browser
+    # reports it as a CORS failure. FastAPI already returns these with
+    # `Access-Control-Allow-Origin: *` (routes/gfx_assets.py,
+    # routes/gps_seuranta.py); Caddy just has to stay out of the way.
+    # Scoped to map.jpg, not all of /api/gps-seuranta/*, because that
+    # namespace also holds admin-only POST routes (autolocate).
+    @csc_public_assets path /api/gfx-assets/* /api/gps-seuranta/*/map.jpg
+    handle @csc_public_assets {
+        uri strip_prefix /api
+        reverse_proxy localhost:{{ csc__api_port }}
     }
 
-    handle {
+    handle /api/* {
+        # API proxy: strip /api, basic_auth, forward to api container.
+        # FastAPI is started with --root-path /api so absolute URLs it
+        # generates (openapi.json, redirects, pagination) include the prefix.
+        uri strip_prefix /api
         basic_auth {
-{% for cred in credentials.gfx %}
+{% for cred in credentials.csc %}
             {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
 {% endfor %}
         }
-        reverse_proxy localhost:{{ gfx__control_host_port }}
+        reverse_proxy localhost:{{ csc__api_port }}
     }
+    handle {
+        # Admin SPA static bundle, SPA fallback for client-side routes.
+        basic_auth {
+{% for cred in credentials.csc %}
+            {{ cred.user }} {{ cred.pass | password_hash('blowfish', ((cred.user ~ 'caddy') | hash('sha256'))[:22]) }}
+{% endfor %}
+        }
+        root * {{ csc__admin_dist }}
+        try_files {path} /index.html
+        file_server
+    }
+}
+
+gfx.csc.{{ web_proxy__domain }} {
+{% if web_proxy__disable_tls | default(false) %}
+    tls internal
+{% endif %}
+    root * {{ csc__gfx_dist }}
+    try_files {path} /index.html
+    file_server
 }

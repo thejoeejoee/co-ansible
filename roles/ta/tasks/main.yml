@@ -1,20 +1,45 @@
-- name: Prepare /home/ta/ directory
+- name: Prepare {{ ta__home_dir }}/ directory
+  become: true
   file:
-    path: /home/ta/
+    path: "{{ ta__home_dir }}/"
     state: directory
 
-- name: Prepare /home/ta/config directory
+- name: Prepare {{ ta__home_dir }}/config directory
+  become: true
   file:
-    path: /home/ta/config
+    path: "{{ ta__home_dir }}/config"
     state: directory
+
+# TallyArbiter appends its own app-data subfolder to APPDATA
+# (see getAppDataFolder() in TallyArbiter source), so config.json lives one
+# level deeper than the mounted volume root.
+- name: Prepare {{ ta__home_dir }}/config/TallyArbiter directory
+  become: true
+  file:
+    path: "{{ ta__home_dir }}/config/TallyArbiter"
+    state: directory
+
+# config.json is fully IaC-owned: every deploy overwrites it with the
+# devices/outputs declared in ta__devices/ta__outputs. Any changes made
+# through the TallyArbiter UI (devices, sources, bus_options) do not
+# persist across deploys.
+- name: Deploy config.json
+  become: true
+  template:
+    src: config.json.j2
+    dest: "{{ ta__home_dir }}/config/TallyArbiter/config.json"
+    force: true
+  notify: Restart TallyArbiter
 
 - name: Prepare compose
+  become: true
   template:
     src: docker-compose.yml
-    dest: /home/ta/docker-compose.yml
+    dest: "{{ ta__home_dir }}/docker-compose.yml"
 
 - name: Create and start services
+  become: true
   community.docker.docker_compose_v2:
-    project_src: /home/ta/
+    project_src: "{{ ta__home_dir }}/"
     files:
     - docker-compose.yml

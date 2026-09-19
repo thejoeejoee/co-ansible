@@ -10,6 +10,32 @@ csc__api_port: 8100
 csc__admin_dist: "{{ csc__home_dir }}/admin"
 csc__gfx_dist: "{{ csc__home_dir }}/gfx"
 
+# --- Where admin + gfx get built ---
+# Default: on the control node. A dev laptop has the toolchain, the warm pnpm
+# store and the cores; a 2-vCPU VM has none of the three, and a Nuxt build is
+# the single heaviest thing in this role. Building locally also means the VM
+# never needs a node toolchain, a pnpm store or an nm-cache at all — only the
+# finished `.output/public/` tree gets rsynced over.
+#
+# Opt out per-run by adding the `remote_build` tag to a deploy, which puts the
+# builds back into throwaway node:24-slim containers on the target host:
+#
+#   ansible-playbook ... --tags csc,remote_build
+#
+# The extra tag only flips this switch — `csc` (or a sub-tag) is still what
+# selects the tasks. `-e csc__build_remote=true` does the same without tags,
+# and is the right form for a host that should *always* build remotely.
+#
+# This only covers the two Nuxt bundles. The api / otd / dmr5g-mirror docker
+# images are still built on the target: they are linux/amd64, and emulating
+# that on an arm64 laptop plus shipping the layers over ssh is slower than
+# letting the VM build them natively.
+csc__build_remote: "{{ 'remote_build' in ansible_run_tags }}"
+
+# Control-node build only. `pnpm --filter ./<app> build` runs from
+# `csc__source_dir`, so the checkout's own node_modules are what gets used.
+csc__pnpm_bin: pnpm
+
 # Native PostgreSQL (apt install postgresql-16 on the VM)
 csc__pg_version: 16
 csc__db_port: 5432

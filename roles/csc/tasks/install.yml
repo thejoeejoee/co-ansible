@@ -1,45 +1,12 @@
-- name: Ensure pnpm store and node_modules cache dirs exist
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-  loop:
-    - "{{ csc__home_dir }}/pnpm-store"
-    - "{{ csc__home_dir }}/nm-cache/root"
-    - "{{ csc__home_dir }}/nm-cache/admin"
-    - "{{ csc__home_dir }}/nm-cache/gfx"
-    - "{{ csc__home_dir }}/nm-cache/shared"
+# Dispatcher: workspace deps land wherever the bundles get built.
+#
+# `include_tasks` (not import) is deliberate — a skipped include never runs the
+# tasks inside it, so the branch that loses can't clobber the registers set by
+# the branch that won.
+- name: Install workspace deps on the control node
+  ansible.builtin.include_tasks: install_local.yml
+  when: not csc__build_remote | bool
 
-# One `pnpm install` populates every workspace member's node_modules and the
-# pnpm content-addressed store. Both build_admin.yml and build_gfx.yml assume
-# this ran first, so they can skip apt (native modules already compiled and
-# living in nm-cache/**) and go straight to their build script.
-- name: Install workspace deps (throwaway node container)
-  ansible.builtin.command:
-    argv:
-      - docker
-      - run
-      - --rm
-      - -v
-      - "{{ csc__home_dir }}/src:/build"
-      - -v
-      - "{{ csc__home_dir }}/pnpm-store:/pnpm-store"
-      - -v
-      - "{{ csc__home_dir }}/nm-cache/root:/build/node_modules"
-      - -v
-      - "{{ csc__home_dir }}/nm-cache/admin:/build/admin/node_modules"
-      - -v
-      - "{{ csc__home_dir }}/nm-cache/gfx:/build/gfx/node_modules"
-      - -v
-      - "{{ csc__home_dir }}/nm-cache/shared:/build/packages/shared/node_modules"
-      - -w
-      - /build
-      - node:24-slim
-      - bash
-      - -euxc
-      - |
-        apt-get update -qq
-        apt-get install -y --no-install-recommends -qq python3 make g++ ca-certificates
-        corepack enable
-        pnpm config set store-dir /pnpm-store
-        pnpm install --frozen-lockfile
-  changed_when: true
+- name: Install workspace deps on the target host
+  ansible.builtin.include_tasks: install_remote.yml
+  when: csc__build_remote | bool

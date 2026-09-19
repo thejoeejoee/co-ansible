@@ -1,17 +1,33 @@
-# Per-tag imports. Playbook-level tag `csc` is inherited by every task, so:
-#   --tags csc         → full deploy (all tasks below)
-#   --tags csc_api     → api only: postgres, db, source, compose, migrate
-#   --tags csc_admin   → admin only: source + install + build_admin + wait
-#   --tags csc_gfx     → gfx only:   source + install + build_gfx   + wait
-# admin/gfx builds fire async and are waited on in wait_builds.yml, so under
-# --tags csc they run in parallel; sub-tag deploys transparently only wait
-# for the build they fired.
+# Per-tag imports. The playbook-level tag `csc` is inherited by every task, so
+# `--tags csc` is always the full deploy. Sub-tags narrow it to one component:
+#
+#   --tags csc         → everything below
+#   --tags csc_db      → native PostgreSQL only: apt, pg_hba, UFW, role + database
+#   --tags csc_api     → api only:   source + `compose up api` + alembic
+#   --tags csc_admin   → admin only: source + install + build_admin + wait + publish
+#   --tags csc_gfx     → gfx only:   source + install + build_gfx   + wait + publish
+#   --tags csc_otd     → DMR 5G only: source + `compose up otd dmr5g-mirror`
+#
+# Sub-tags compose freely (`--tags csc_api,csc_gfx`). Notes:
+#   * csc_db is deliberately NOT pulled in by csc_api — provisioning Postgres
+#     is an apt-install that rarely changes, and keeping it out is what makes
+#     `--tags csc_api` a fast api-only redeploy. A first-ever deploy should use
+#     `--tags csc` (or `csc_db,csc_api`).
+#   * every compose call is scoped with `services:`, so an api redeploy never
+#     rebuilds or recreates the DMR containers, and vice versa.
+#   * admin/gfx builds fire async and are awaited in wait_builds.yml, so under
+#     --tags csc they run in parallel; sub-tag deploys transparently only wait
+#     for the build they fired.
+#   * those two builds run on the *control node* by default and are rsynced
+#     over in publish_bundles.yml. Adding the `remote_build` tag to the run
+#     (`--tags csc,remote_build`) puts them back in node containers on the
+#     target; see csc__build_remote in defaults/main.yml.
 - import_tasks: postgres.yml
-  tags: [csc_api]
+  tags: [csc_db]
 - import_tasks: db.yml
-  tags: [csc_api]
+  tags: [csc_db]
 - import_tasks: source.yml
-  tags: [csc_api, csc_admin, csc_gfx]
+  tags: [csc_api, csc_admin, csc_gfx, csc_otd]
 - import_tasks: install.yml
   tags: [csc_admin, csc_gfx]
 - import_tasks: build_admin.yml
@@ -20,7 +36,20 @@
   tags: [csc_gfx]
 - import_tasks: wait_builds.yml
   tags: [csc_admin, csc_gfx]
+- import_tasks: publish_bundles.yml
+  tags: [csc_admin, csc_gfx]
 - import_tasks: compose.yml
+  vars:
+    csc_compose_services: [api]
   tags: [csc_api]
 - import_tasks: migrate.yml
   tags: [csc_api]
+# DMR stack last: dmr5g-mirror LISTENs on tables that migrate.yml creates, so
+# under a full `--tags csc` run it comes up against an already-migrated schema.
+# ...and skipped wholesale when the DMR stack is off, since the template then
+# renders no such services and `compose up otd` would error.
+- import_tasks: compose.yml
+  vars:
+    csc_compose_services: [otd, dmr5g-mirror]
+  when: csc__dmr5g_enabled
+  tags: [csc_otd]

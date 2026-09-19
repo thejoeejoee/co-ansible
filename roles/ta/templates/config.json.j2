@@ -1,0 +1,51 @@
+{
+ "security": {
+  "jwt_private_key": {{ ta__jwt_private_key | to_json }}
+ },
+ "users": [],
+ "cloud_destinations": [],
+ "cloud_keys": [],
+ "device_actions": [],
+ "device_sources": [],
+ "devices": [
+{% for device in ta__devices %}
+  {
+   "name": {{ device | to_json }},
+   "enabled": true,
+   "id": {{ ('ta-device-' ~ device) | to_uuid | to_json }}
+  }{{ "," if not loop.last else "" }}
+{% endfor %}
+ ],
+ "sources": [],
+ "tsl_clients": [],
+ "tsl_clients_1secupdate": false,
+ "bus_options": [
+{% for output in ta__outputs %}
+  {
+   "id": {{ output.id | to_json }},
+   "label": {{ output.label | to_json }},
+   "type": {{ output.type | to_json }},
+   "color": {{ output.color | to_json }},
+   "priority": {{ output.priority }},
+   "visible": true
+  }{{ "," if not loop.last else "" }}
+{% endfor %}
+ ],
+ "externalAddress": {{ ta__external_address | to_json }},
+ "chat_enabled": true,
+ "remoteErrorReporting": false,
+ "uuid": {{ ta__uuid | to_json }},
+ "mqtt": {
+  "enabled": false,
+  "broker": "localhost",
+  "port": 1883,
+  "username": "",
+  "password": "",
+  "topicPrefix": "tallyarbiter",
+  "retain": true,
+  "qos": 0,
+  "reconnectPeriod": 5000,
+  "connectTimeout": 10000,
+  "keepalive": 60
+ }
+}

@@ -16,10 +16,18 @@ csos:
       gfx:
         - { user: admin, pass: changeme }
       restream:
-        youtube_key: ""
-        facebook_key: ""
+        targets: []
+          # - rtmp://a.rtmp.youtube.com/live2/YOUTUBE_KEY
+          # - rtmps://live-api-s.facebook.com:443/rtmp/FACEBOOK_KEY
+          # - srt://example.com:9999?streamid=publish:foo
         write:
           - { user: restream, pass: changeme }
+      csc:
+        - { user: admin, pass: changeme }
+      csc_db:
+        user: csc
+        pass: csc
+        name: csc
 
     web_proxy__domain: csos.orb.local
     web_proxy__disable_tls: true

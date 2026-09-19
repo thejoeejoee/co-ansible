@@ -1,0 +1,5 @@
+# Restream targets — one URL per line. Blank lines and lines starting with # are ignored.
+# Supported schemes: rtmp://, rtmps://, srt://
+{% for url in credentials.restream.targets | default([]) %}
+{{ url }}
+{% endfor %}

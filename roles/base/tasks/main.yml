@@ -9,6 +9,7 @@
   apt:
     name:
     - ffmpeg
+    - ufw
 
 - name: Install Docker
   block:

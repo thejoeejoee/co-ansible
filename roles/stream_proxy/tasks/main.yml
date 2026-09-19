@@ -111,13 +111,21 @@
     src: mediamtx.yml
     dest: /etc/mediamtx/mediamtx.yml
     mode: '0644'
+  notify: Restart mediamtx
 
-- name: Deploy restream env file
+- name: Deploy restream targets file
   become: true
   template:
-    src: restream.env.j2
-    dest: /etc/mediamtx/restream.env
+    src: restream.targets.j2
+    dest: /etc/mediamtx/restream.targets
     mode: '0600'
+  notify: Restart mediamtx
+
+- name: Remove legacy restream env file
+  become: true
+  file:
+    path: /etc/mediamtx/restream.env
+    state: absent
 
 - name: Deploy restream script
   become: true
@@ -125,6 +133,7 @@
     src: ../templates/restream.sh
     dest: /etc/mediamtx/restream.sh
     mode: '0755'
+  notify: Restart mediamtx
 
 - name: Prepare offline segment video
   become: true

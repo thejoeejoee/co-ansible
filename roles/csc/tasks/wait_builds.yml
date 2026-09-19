@@ -1,11 +1,17 @@
-# Both async builds fire earlier with poll:0 and register csc_admin_build_job /
+# Both builds fire earlier with poll:0 and register csc_admin_build_job /
 # csc_gfx_build_job. Wait for whichever were actually fired (depends on which
 # tags were selected). When a build task was skipped by tag, its *_build_job
 # variable is undefined and the corresponding wait is skipped too.
+#
+# An async job can only be polled on the host that started it, so the wait
+# follows the build: localhost under the default control-node build, the target
+# host under `remote_build`. The register names are identical either way, which
+# is why this file needs no branching beyond the delegate.
 
 - name: Wait for admin SPA build to finish
   ansible.builtin.async_status:
     jid: "{{ csc_admin_build_job.ansible_job_id }}"
+  delegate_to: "{{ 'localhost' if not csc__build_remote | bool else inventory_hostname }}"
   register: csc_admin_build_result
   until: csc_admin_build_result.finished
   retries: 90
@@ -17,6 +23,7 @@
 - name: Wait for gfx SPA build to finish
   ansible.builtin.async_status:
     jid: "{{ csc_gfx_build_job.ansible_job_id }}"
+  delegate_to: "{{ 'localhost' if not csc__build_remote | bool else inventory_hostname }}"
   register: csc_gfx_build_result
   until: csc_gfx_build_result.finished
   retries: 90

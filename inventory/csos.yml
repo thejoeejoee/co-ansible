@@ -5,3 +5,7 @@ csos:
   vars:
     ansible_user: root
     web_proxy__domain: csos.josefkolar.cz
+
+    # Vault (csos.enc) must define:
+    #   credentials.csc:     [{ user, pass }]           - basic_auth for csc.* + api.csc.*
+    #   credentials.csc_db:  { user, pass, name }       - native PostgreSQL role
