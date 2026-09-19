@@ -25,8 +25,8 @@ restream_one() {
   esac
   while true; do
     ffmpeg -i "$INPUT" -c copy -f "$fmt" "$url"
-    echo "Stream to $url ended, restarting in 100ms..."
-    sleep 0.1
+    echo "Stream to $url ended, restarting in 500ms..."
+    sleep 0.5
   done
 }
 
