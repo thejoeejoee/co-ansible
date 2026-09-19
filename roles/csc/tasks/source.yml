@@ -32,6 +32,13 @@
       - "--exclude=api/instance/"
       - "--exclude=.env"
       - "--exclude=**/dist/"
+      # Root-anchored (leading slash) so only the top-level dev/ sample data is
+      # skipped, not gfx/dev. dev/iof + dev/oresults are untracked operator
+      # exports used only by api tests (api/tests/), never at build or runtime
+      # on the server — no reason to ship ~3 MB of them to prod. They also
+      # carry NFD-accented (Czech) filenames whose bytes trip ansible-core's
+      # strict-UTF8 response check on the rsync itemized output.
+      - "--exclude=/dev/"
   delegate_to: localhost
 
 - name: Render api.env to {{ csc__home_dir }}/config/api.env
