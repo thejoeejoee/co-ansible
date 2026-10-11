@@ -1,6 +1,6 @@
 # auth
 
-Centralized SSO gateway for CSOS: [Casdoor](https://casdoor.org) as the OIDC provider, [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) as the Caddy `forward_auth` gateway. Replaces the Zitadel-based design from PR #7 — see [issue #15](https://github.com/thejoeejoee/co-ansible/issues/15).
+Centralized SSO gateway for CSOS: [Casdoor](https://casdoor.org) as the OIDC provider, [casdoor-forward-auth](https://github.com/casdoor/casdoor-forward-auth) as the Caddy `forward_auth` gateway. Replaces the Zitadel-based design from PR #7 — see [issue #15](https://github.com/thejoeejoee/co-ansible/issues/15).
 
 ## Why Casdoor
 
@@ -16,11 +16,11 @@ To add a provider (e.g. GitHub), add its OAuth app credentials to inventory and 
 
 ## How default-deny works
 
-New users — whether they sign up via Google or GitHub — start in the `{{ auth__org }}` organization with **zero group memberships**. Casdoor's default JWT format already emits a `groups` claim (a plain array of `org/group` strings) with no custom-claim configuration needed; oauth2-proxy reads it via `oidc_groups_claim = "groups"` and forwards it as the `X-Auth-Request-Groups` header, which Caddy's ACLs match against.
+New users — whether they sign up via Google or GitHub — start in the `{{ auth__org }}` organization with **zero group memberships**. Casdoor's default JWT format already emits a `groups` claim (a plain array of `org/group` strings) with no custom-claim configuration needed; casdoor-forward-auth reads it at login and answers each of Caddy's `forward_auth` checks with 200 or 403, depending on whether the user is in one of the groups the route asks for (`uri /_auth/auth?groups=...` in the `require_group` snippet of `roles/web_proxy/templates/Caddyfile.j2`). The user's groups also reach the backend as the `X-Forwarded-Groups` header.
 
 An admin assigns a user to `{{ auth__org }}/admin`, `{{ auth__org }}/production`, `{{ auth__org }}/demo`, or `{{ auth__org }}/gfx` via the Casdoor web UI (**Groups** page, or editing the user directly) — that's the entire "approve a user" flow. There's no custom action/webhook to maintain.
 
-Groups are read at login and kept in the oauth2-proxy session cookie for `auth__oauth2_proxy_cookie_expire` (168h by default). A user who was just approved (or removed) has to open `https://{{ web_proxy__domain }}/oauth2/sign_out` and sign in again for the change to apply, or wait for the session to run out.
+Groups are read at login and kept in the session cookie for `auth__forward_auth_session_ttl` (24h by default). A user who was just approved (or removed) has to open `https://{{ web_proxy__domain }}/_auth/logout` and sign in again for the change to apply, or wait for the session to run out — the 403 page says so.
 
 This was verified against a live Casdoor instance (not just documentation), including the exact JWT/`/api/userinfo` payload shape — see the PR history for the token dump.
 
@@ -30,7 +30,11 @@ This was verified against a live Casdoor instance (not just documentation), incl
 
 Two deliberate exceptions to "update on every run":
 - The JWT signing cert (`cert-{{ auth__org }}`) is create-once-only — regenerating it would invalidate every issued token.
-- Application updates are scoped to specific `columns` (via Casdoor's `?columns=` query param) rather than a full-object replace, because `Application` also carries server-generated `clientId`/`clientSecret` that our declarative body doesn't know. A full-column update would blank them out and break oauth2-proxy/Grafana's already-configured OIDC clients.
+- Application updates are scoped to specific `columns` (via Casdoor's `?columns=` query param) rather than a full-object replace, because `Application` also carries server-generated `clientId`/`clientSecret` that our declarative body doesn't know. A full-column update would blank them out and break forward-auth/Grafana's already-configured OIDC clients.
+
+## Why forward-auth talks to Casdoor over the compose network
+
+casdoor-forward-auth has a single `CASDOOR_ENDPOINT`, used both for its own server-to-server calls (token exchange, JWKS) and for the browser's login redirect. It is set to `http://casdoor:8000`, so the server-to-server calls never leave the compose network — the public `https://{{ auth__domain }}` hostname would hairpin through Caddy, and fails outright in OrbStack, where the self-signed cert is rejected and forward-auth has no skip-verify option. The login redirect it builds from that internal URL passes through Caddy on its way to the browser, and the `/_auth/*` handler in the Caddyfile rewrites its `Location` back to the public hostname.
 
 ## AI Assistant widget disabled
 
@@ -49,21 +53,21 @@ Yes — via a `Provider` of category `Email` (SMTP), used for signup email verif
 1. **DNS**: `auth.{{ web_proxy__domain }}` must resolve to the VM (the browser-facing OAuth login redirect goes through this public hostname).
 2. **Google OAuth**: create an OAuth client in Google Cloud Console with redirect URI `https://auth.{{ web_proxy__domain }}/callback`, and set `auth__google_client_id` / `auth__google_client_secret` in inventory.
 3. **GitHub OAuth**: create an OAuth App in GitHub Developer Settings with the same callback pattern, and set `auth__github_client_id` / `auth__github_client_secret` in inventory.
-4. **Secrets** (vault for prod, inline for `orb.yaml`): `auth__admin_pass`, `auth__oauth2_proxy_cookie_secret`, `auth__google_client_id`, `auth__google_client_secret`, `auth__github_client_id`, `auth__github_client_secret`.
+4. **Secrets** (vault for prod, inline for `orb.yaml`): `auth__admin_pass`, `auth__forward_auth_cookie_secret` (at least 32 characters), `auth__google_client_id`, `auth__google_client_secret`, `auth__github_client_id`, `auth__github_client_secret`.
 
 ## Reconcile flow (`tasks/reconcile.yml`, every deploy)
 
 1. Log in as `built-in/admin` — tries `auth__admin_pass` first, falls back to Casdoor's well-known default (`123`, first boot only) and rotates it to `auth__admin_pass` via `/api/set-password` if that's what worked.
 2. Upsert the `{{ auth__org }}` organization (incl. theme), the JWT signing cert (create-only), the groups, and the identity providers.
-3. Upsert the `oauth2-proxy` and `grafana` OIDC applications with every configured provider attached (`signupGroup` left empty — see default-deny above) and password signin genuinely disabled.
+3. Upsert the `forward-auth` and `grafana` OIDC applications with every configured provider attached (`signupGroup` left empty — see default-deny above) and password signin genuinely disabled.
 4. Provision `testadmin`/`testdemo` accounts when `auth__provision_test_users` is set (local dev only), pre-assigned to their group. Since password login is disabled on the real applications, these accounts can't interactively sign in anymore — they only verify the bootstrap/group plumbing itself. End-to-end login testing needs real Google/GitHub OAuth app credentials, even in local dev.
-5. Persist the generated client credentials as Ansible local facts and re-render `oauth2-proxy.cfg` with the real values.
+5. Persist the generated client credentials as Ansible local facts and re-render `forward-auth.env` with the real values.
 
 All calls authenticate with a Casdoor admin **session cookie** (`/api/login` → `Set-Cookie` → forwarded on subsequent calls), not the built-in application's client credentials — those are publicly readable via the unauthenticated `GET /api/get-application?id=admin/app-built-in` endpoint by Casdoor's own design, so this role never depends on them.
 
 ## Scope note
 
-This role only covers the auth backend (Casdoor + oauth2-proxy) and the ACL wiring for routes that already exist on `main` (HLS, WebRTC, Prometheus, Grafana, the legacy `gfx` control panel). It does not port PR #7's `/credentials` and `/demo` informational pages — those were unrelated content features bundled into that PR, not part of the auth swap.
+This role only covers the auth backend (Casdoor + casdoor-forward-auth) and the ACL wiring for routes that already exist on `main` (HLS, WebRTC, Prometheus, Grafana, the legacy `gfx` control panel). It does not port PR #7's `/credentials` and `/demo` informational pages — those were unrelated content features bundled into that PR, not part of the auth swap.
 
 ## Deploy
 

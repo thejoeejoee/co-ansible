@@ -20,13 +20,12 @@ services:
       retries: 30
       start_period: 20s
 
-  oauth2-proxy:
-    image: {{ auth__oauth2_proxy_image }}
-    command: --config=/etc/oauth2-proxy.cfg
-    volumes:
-      - "{{ auth__home_dir }}/oauth2-proxy.cfg:/etc/oauth2-proxy.cfg:ro"
+  forward-auth:
+    image: {{ auth__forward_auth_image }}
+    env_file:
+      - forward-auth.env
     ports:
-      - "127.0.0.1:{{ auth__oauth2_proxy_port }}:4180"
+      - "127.0.0.1:{{ auth__forward_auth_port }}:9999"
     depends_on:
       casdoor:
         condition: service_healthy

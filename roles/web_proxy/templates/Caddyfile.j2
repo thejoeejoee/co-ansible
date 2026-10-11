@@ -4,44 +4,30 @@
     }
 }
 
-# Reusable SSO gate: forward_auth to oauth2-proxy, then require the caller's
-# X-Auth-Request-Groups header to match the group regex passed as the first
-# snippet argument. Casdoor groups are namespaced "{{ auth__org }}/<name>";
-# new users (Google or GitHub) start in none of them until an admin adds
-# them via the Casdoor Groups page — see roles/auth/README.md.
+# Reusable SSO gate: forward_auth to casdoor-forward-auth, which lets the
+# caller through only when they are in at least one of the Casdoor groups
+# passed (comma-separated) as the first snippet argument. Signed-out page
+# loads are redirected to the login, other signed-out requests get 401, and
+# signed-in users outside those groups get 403. Casdoor groups are namespaced
+# "{{ auth__org }}/<name>"; new users (Google or GitHub) start in none of
+# them until an admin adds them via the Casdoor Groups page — see
+# roles/auth/README.md.
+#
+# Never import this without an argument that names a group: forward-auth
+# treats an empty "groups=" as "any signed-in user", and signing up is open.
 (require_group) {
-    # Drop whatever the client sent in the identity headers first. For a user
-    # in no group oauth2-proxy returns no X-Auth-Request-Groups at all, and
-    # some Caddy versions (seen on 2.10.2) then leave the client's own header
-    # in place — letting a signed-in user without any group claim one. The
-    # route block is what makes this run before forward_auth: in Caddy's
-    # default directive order request_header comes after it.
-    route {
-        request_header -X-Auth-Request-User
-        request_header -X-Auth-Request-Email
-        request_header -X-Auth-Request-Groups
-        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
-            uri /oauth2/auth
-            header_up X-Real-IP {remote_host}
-            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
-            @unauth status 401
-            handle_response @unauth {
-                # Absolute: /oauth2/* is only routed on the main domain, not
-                # on the subdomain sites (gfx.) that import this gate too.
-                redir * https://{{ web_proxy__domain }}/oauth2/sign_in?rd={scheme}://{host}{uri}
-            }
-        }
+    forward_auth localhost:{{ auth__forward_auth_port | default(9999) }} {
+        uri /_auth/auth?groups={args[0]}
+        copy_headers X-Forwarded-User X-Forwarded-Email X-Forwarded-Groups
     }
-    @no_group not header_regexp X-Auth-Request-Groups "{args[0]}"
-    respond @no_group 403
 }
 
 (require_stream_group) {
-    import require_group (^|,){{ auth__org }}/(admin|production)(,|$)
+    import require_group {{ auth__org }}/admin,{{ auth__org }}/production
 }
 
 (require_gfx_group) {
-    import require_group (^|,){{ auth__org }}/(admin|gfx)(,|$)
+    import require_group {{ auth__org }}/admin,{{ auth__org }}/gfx
 }
 
 http://localhost:2019 {
@@ -60,9 +46,14 @@ auth.{{ web_proxy__domain }} {
     tls internal
 {% endif %}
 
-    # oauth2-proxy endpoints — public (must come first)
-    handle /oauth2/* {
-        reverse_proxy localhost:{{ auth__oauth2_proxy_port | default(4180) }}
+    # casdoor-forward-auth login/callback/logout — public (must come first).
+    # forward-auth reaches Casdoor over the compose network and builds the
+    # browser's login redirect from that same internal URL, so point it back
+    # at the public hostname here (see roles/auth/templates/forward-auth.env.j2).
+    handle /_auth/* {
+        reverse_proxy localhost:{{ auth__forward_auth_port | default(9999) }} {
+            header_down Location ^http://casdoor:8000 https://{{ auth__domain }}
+        }
     }
 
     # HLS / WebRTC playback — admin or production group
@@ -105,7 +96,7 @@ auth.{{ web_proxy__domain }} {
 
     # Prometheus — admin only, do not strip /prometheus
     handle /prometheus/* {
-        import require_group (^|,){{ auth__org }}/admin(,|$)
+        import require_group {{ auth__org }}/admin
         reverse_proxy localhost:9090
     }
 

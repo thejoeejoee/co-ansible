@@ -111,7 +111,7 @@ ansible-playbook -i inventory/orb.yaml playbooks/setup.yml \
 | `csc.HOST/api/gfx/stream/*` (SSE)   | none — public per ADR-012 (slot slug is the obscurity token)      |
 | `gfx.csc.HOST/*` (overlay)          | none — public, browser source for OBS/vMix                        |
 
-The API itself runs with `CSC_PROXY_AUTH_ENABLED=false` — every request that gets past Caddy is treated as the built-in dev admin user. Caddy is the sole gatekeeper. To upgrade to real role-based auth later, put oauth2-proxy in front of `csc.HOST/api/*` and flip `CSC_PROXY_AUTH_ENABLED=true`.
+The API itself runs with `CSC_PROXY_AUTH_ENABLED=false` — every request that gets past Caddy is treated as the built-in dev admin user. Caddy is the sole gatekeeper. To upgrade to real role-based auth later, put the `require_group` gate (casdoor-forward-auth) in front of `csc.HOST/api/*` and flip `CSC_PROXY_AUTH_ENABLED=true`.
 
 FastAPI is started with `uvicorn --root-path /api` so absolute URLs it generates (openapi.json, Swagger UI, pagination Location headers) include the prefix and stay correct end-to-end. Caddy strips `/api` before proxying so FastAPI's route table stays at its native paths (`/health`, `/events`, ...).
 
