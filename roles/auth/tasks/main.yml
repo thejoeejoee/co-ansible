@@ -17,30 +17,38 @@
     dest: "{{ auth__home_dir }}/docker-compose.yml"
   become: true
 
+# The forward_auth section is missing on hosts last deployed with the
+# oauth2-proxy gateway — fall back to the placeholders there, reconcile.yml
+# fills in the real values further down.
 - name: Load credentials from local facts (subsequent runs)
   ansible.builtin.set_fact:
-    auth__oauth2_proxy_client_id: "{{ ansible_local.auth_credentials.oauth2_proxy.client_id }}"
-    auth__oauth2_proxy_client_secret: "{{ ansible_local.auth_credentials.oauth2_proxy.client_secret }}"
+    auth__forward_auth_client_id: "{{ ansible_local.auth_credentials.forward_auth.client_id | default(auth__forward_auth_client_id) }}"
+    auth__forward_auth_client_secret: "{{ ansible_local.auth_credentials.forward_auth.client_secret | default(auth__forward_auth_client_secret) }}"
     auth__grafana_oidc_client_id: "{{ ansible_local.auth_credentials.grafana.client_id }}"
     auth__grafana_oidc_client_secret: "{{ ansible_local.auth_credentials.grafana.client_secret }}"
   when: ansible_local.auth_credentials is defined
   no_log: true
 
-- name: Render oauth2-proxy config
+- name: Render forward-auth environment
   ansible.builtin.template:
-    src: oauth2-proxy.cfg.j2
-    dest: "{{ auth__home_dir }}/oauth2-proxy.cfg"
-    owner: "{{ auth__oauth2_proxy_uid }}"
-    group: "{{ auth__oauth2_proxy_uid }}"
-    mode: '0400'
+    src: forward-auth.env.j2
+    dest: "{{ auth__home_dir }}/forward-auth.env"
+    mode: '0600'
   become: true
   no_log: true
+
+- name: Remove config of the replaced oauth2-proxy gateway
+  ansible.builtin.file:
+    path: "{{ auth__home_dir }}/oauth2-proxy.cfg"
+    state: absent
+  become: true
 
 - name: Create and start auth services
   community.docker.docker_compose_v2:
     project_src: "{{ auth__home_dir }}/"
     files:
       - docker-compose.yml
+    remove_orphans: true
   become: true
 
 - name: Reconcile Casdoor state (org, groups, providers, applications)

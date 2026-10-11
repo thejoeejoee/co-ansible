@@ -71,7 +71,7 @@ ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --tags stream_proxy
 | Tag | What it deploys |
 |-----|-----------------|
 | `base` | apt upgrade, ffmpeg, Docker |
-| `auth` | Casdoor (OIDC provider) + oauth2-proxy (Caddy `forward_auth` gateway) — see `roles/auth/README.md` |
+| `auth` | Casdoor (OIDC provider) + casdoor-forward-auth (Caddy `forward_auth` gateway) — see `roles/auth/README.md` |
 | `stream_proxy` | mediamtx binary + config, restream script + env, systemd unit, UFW rules |
 | `web_proxy` | Caddy + Caddyfile, UFW rules (80/443) |
 | `gfx` | GFX overlay Docker Compose + config |
@@ -81,7 +81,7 @@ ansible-playbook -i inventory/orb.yaml playbooks/setup.yml --tags stream_proxy
 
 Production secrets live in `csos.enc` (Ansible Vault). Local dev uses plaintext dummy values in `inventory/orb.yaml`.
 
-Secrets are structured as a `credentials` dict with keys: `stream_write`, `stream_read`, `telemetry`. Auth secrets (`auth__domain`, `auth__cookie_domain`, `auth__admin_pass`, `auth__oauth2_proxy_cookie_secret`, `auth__google_client_id`, `auth__google_client_secret`, `auth__github_client_id`, `auth__github_client_secret`) are separate top-level keys — add them to `csos.enc` via `ansible-vault edit csos.enc --vault-password-file pass.env` before the first `auth`-tagged deploy.
+Secrets are structured as a `credentials` dict with keys: `stream_write`, `stream_read`, `telemetry`. Auth secrets (`auth__domain`, `auth__cookie_domain`, `auth__admin_pass`, `auth__forward_auth_cookie_secret`, `auth__google_client_id`, `auth__google_client_secret`, `auth__github_client_id`, `auth__github_client_secret`) are separate top-level keys — add them to `csos.enc` via `ansible-vault edit csos.enc --vault-password-file pass.env` before the first `auth`-tagged deploy.
 
 ### Access control
 

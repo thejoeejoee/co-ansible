@@ -1,17 +1,15 @@
 auth__home_dir: /opt/auth
 auth__casdoor_port: 8000
-auth__oauth2_proxy_port: 4180
+auth__forward_auth_port: 9999
 auth__casdoor_image: casbin/casdoor:3.159.0
-auth__oauth2_proxy_image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.2
-# The non-root user the oauth2-proxy image runs as. oauth2-proxy.cfg holds
-# the client and cookie secrets, so it is readable by this user only.
-auth__oauth2_proxy_uid: 65532
+auth__forward_auth_image: ghcr.io/casdoor/casdoor-forward-auth:2.1.0
 
 # How long a sign-in lasts. Groups are read at login and frozen in the
-# session cookie for this long — a user who was just added to (or removed
-# from) a group keeps their old access until they sign out at
-# /oauth2/sign_out and back in, or the session runs out.
-auth__oauth2_proxy_cookie_expire: 168h
+# session cookie for this long — after changing a user's groups in Casdoor
+# they apply once the user opens /_auth/logout and signs in again, or when
+# the session runs out. Keep it well above the length of an event: once it
+# expires, HLS segment requests get a login redirect mid-playback.
+auth__forward_auth_session_ttl: 24h
 
 # Set to "" (default) to hide Casdoor's floating "AI Assistant" widget —
 # it otherwise embeds an iframe to an external casbin.org-hosted service.
@@ -46,8 +44,8 @@ auth__providers:
 # each of these with signupGroup left empty (default-deny) — see
 # tasks/reconcile.yml.
 auth__applications:
-  - name: oauth2-proxy
-    redirect_uri: "https://{{ web_proxy__domain }}/oauth2/callback"
+  - name: forward-auth
+    redirect_uri: "https://{{ web_proxy__domain }}/_auth/callback"
   - name: grafana
     redirect_uri: "https://{{ web_proxy__domain }}/grafana/login/generic_oauth"
 
@@ -63,11 +61,11 @@ auth__admin_pass: changeme-in-inventory
 
 auth__provision_test_users: false
 
-# Placeholder client credentials for the very first oauth2-proxy.cfg render,
+# Placeholder client credentials for the very first forward-auth.env render,
 # before tasks/reconcile.yml creates the real Casdoor applications and
-# re-renders with actual values. oauth2-proxy will simply fail to reach the
-# (not-yet-existing) OIDC client until bootstrap completes.
-auth__oauth2_proxy_client_id: pending-bootstrap
-auth__oauth2_proxy_client_secret: pending-bootstrap
+# re-renders with actual values. Logins through forward-auth simply fail
+# against the (not-yet-existing) OIDC client until reconcile completes.
+auth__forward_auth_client_id: pending-bootstrap
+auth__forward_auth_client_secret: pending-bootstrap
 auth__grafana_oidc_client_id: pending-bootstrap
 auth__grafana_oidc_client_secret: pending-bootstrap

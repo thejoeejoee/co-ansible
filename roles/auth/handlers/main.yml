@@ -3,7 +3,9 @@
     cmd: docker compose -f {{ auth__home_dir }}/docker-compose.yml restart
   become: true
 
-- name: Restart oauth2-proxy
+# "up -d", not "restart": a restart keeps the old container and with it the
+# old environment, so a changed forward-auth.env would not be picked up.
+- name: Recreate forward-auth
   ansible.builtin.command:
-    cmd: docker compose -f {{ auth__home_dir }}/docker-compose.yml restart oauth2-proxy
+    cmd: docker compose -f {{ auth__home_dir }}/docker-compose.yml up -d forward-auth
   become: true

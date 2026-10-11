@@ -17,7 +17,7 @@ co-ansible/
 │   └── orb.yaml              # Local dev (OrbStack VM, non-root)
 ├── roles/
 │   ├── base/                 # apt, ffmpeg, Docker (via geerlingguy.docker)
-│   ├── auth/                 # Casdoor (OIDC) + oauth2-proxy (Caddy forward_auth gateway)
+│   ├── auth/                 # Casdoor (OIDC) + casdoor-forward-auth (Caddy forward_auth gateway)
 │   ├── stream_proxy/         # mediamtx binary + systemd + UFW + config
 │   ├── web_proxy/            # Caddy (via caddy_ansible) + Caddyfile + UFW
 │   │                         # Templates ALSO carry the csc.HOST + gfx.csc.HOST sites
@@ -79,8 +79,8 @@ co-ansible/
 `base` → `auth` → `stream_proxy` / `telemetry` / `csc` (parallel via `strategy: free`) → `web_proxy`
 
 - `base` installs Docker (needed by `ta`, `csc`, `auth`)
-- `auth` deploys Casdoor + oauth2-proxy and (first run only) bootstraps the org/groups/applications; `telemetry` (Grafana OIDC) and `web_proxy` (Caddyfile ACLs) both consume its output, so it must run before them
-- `web_proxy` reverse-proxies to mediamtx (8888/8889), Prometheus (9090), Grafana (3000), Casdoor (8000), oauth2-proxy (4180), and `csc` (127.0.0.1:8100 for api, static bundles for admin + gfx)
+- `auth` deploys Casdoor + casdoor-forward-auth and (first run only) bootstraps the org/groups/applications; `telemetry` (Grafana OIDC) and `web_proxy` (Caddyfile ACLs) both consume its output, so it must run before them
+- `web_proxy` reverse-proxies to mediamtx (8888/8889), Prometheus (9090), Grafana (3000), Casdoor (8000), casdoor-forward-auth (9999), and `csc` (127.0.0.1:8100 for api, static bundles for admin + gfx)
 - `telemetry` scrapes mediamtx (9998) and Caddy (2019) metrics; Grafana itself logs in via Casdoor OIDC
 - `csc` installs PostgreSQL 16 natively, deploys the FastAPI container, builds admin + gfx as static SPAs, and (optionally) runs the ADR-044 DMR 5G tile stack (`otd` + `dmr5g-mirror`)
 
@@ -118,5 +118,7 @@ ansible-galaxy install -r requirements.yml
 - **Casdoor's `app-built-in` client secret is publicly readable** via unauthenticated `GET /api/get-application?id=admin/app-built-in` (Casdoor's own design — the app exists so anyone can look up its OIDC metadata). `roles/auth/tasks/reconcile.yml` deliberately authenticates with a `built-in/admin` session cookie instead, never with that client secret.
 - **Casdoor's default `built-in/admin` password is `123`** on first boot of an empty SQLite volume. `reconcile.yml` rotates it to `auth__admin_pass` via `/api/set-password` on that first run — don't skip that step if hand-rolling a Casdoor deploy outside this role.
 - **Casdoor `groups` claim is namespaced `{{ auth__org }}/<name>`**, not bare group names — Caddyfile ACLs and Grafana's `role_attribute_path` must match on the prefixed form.
+- **Never `import require_group` without a group argument** — casdoor-forward-auth treats an empty `groups=` as "any signed-in user", and Google/GitHub sign-up is open to everyone.
+- **casdoor-forward-auth's `CASDOOR_ENDPOINT` is the internal `http://casdoor:8000`**, and Caddy's `/_auth/*` handler rewrites the login redirect's `Location` to the public `auth__domain`. Both halves are needed — see `roles/auth/README.md`.
 - **`roles/auth/tasks/reconcile.yml` runs on every deploy, not just the first** — `defaults/main.yml`'s `auth__groups`/`auth__providers`/`auth__applications` are the declarative source of truth; editing them and redeploying is enough to change Casdoor's state (see `roles/auth/README.md`).
 - **Casdoor bug: `Application.IsPasswordEnabled()` ignores the "Hide password" signin-method rule** — it only checks whether *any* entry named "Password" exists. The only way to actually disable password login server-side is an explicitly empty `signinMethods` list (falls through to the `enablePassword` bool, which the buggy check doesn't skip). Don't "fix" this by adding a Password entry with `rule: "Hide password"` — it looks right in the UI but doesn't block a direct `/api/login` call.

@@ -203,7 +203,7 @@
 # The update path is scoped to specific columns because Application also
 # carries server-generated clientId/clientSecret that our declarative body
 # doesn't know — a full-column update would blank them out and break
-# oauth2-proxy/Grafana's already-configured OIDC clients.
+# forward-auth/Grafana's already-configured OIDC clients.
 - name: Ensure OIDC applications exist and match config (password disabled)
   ansible.builtin.include_tasks: _ensure_object.yml
   vars:
@@ -265,19 +265,19 @@
       loop_control:
         label: "{{ item.username }}"
       no_log: true
-  # NOTE: password login is disabled on the oauth2-proxy/grafana applications
+  # NOTE: password login is disabled on the forward-auth/grafana applications
   # above, so these test accounts can't actually sign in through the normal
   # flow anymore — they're only useful for verifying the bootstrap/group
   # plumbing itself. End-to-end login testing now needs real Google/GitHub
   # OAuth app credentials, even in local dev.
 
-- name: Fetch oauth2-proxy application credentials
+- name: Fetch forward-auth application credentials
   ansible.builtin.uri:
-    url: "http://localhost:{{ auth__casdoor_port }}/api/get-application?id=admin/oauth2-proxy"
+    url: "http://localhost:{{ auth__casdoor_port }}/api/get-application?id=admin/forward-auth"
     headers:
       Cookie: "{{ _casdoor_cookie }}"
     status_code: 200
-  register: _oauth2_proxy_app
+  register: _forward_auth_app
   no_log: true
 
 - name: Fetch grafana application credentials
@@ -289,10 +289,10 @@
   register: _grafana_app
   no_log: true
 
-- name: Set real oauth2-proxy and grafana client credentials
+- name: Set real forward-auth and grafana client credentials
   ansible.builtin.set_fact:
-    auth__oauth2_proxy_client_id: "{{ _oauth2_proxy_app.json.data.clientId }}"
-    auth__oauth2_proxy_client_secret: "{{ _oauth2_proxy_app.json.data.clientSecret }}"
+    auth__forward_auth_client_id: "{{ _forward_auth_app.json.data.clientId }}"
+    auth__forward_auth_client_secret: "{{ _forward_auth_app.json.data.clientSecret }}"
     auth__grafana_oidc_client_id: "{{ _grafana_app.json.data.clientId }}"
     auth__grafana_oidc_client_secret: "{{ _grafana_app.json.data.clientSecret }}"
   no_log: true
@@ -309,9 +309,9 @@
     dest: /etc/ansible/facts.d/auth_credentials.fact
     mode: '0644'
     content: |
-      [oauth2_proxy]
-      client_id={{ auth__oauth2_proxy_client_id }}
-      client_secret={{ auth__oauth2_proxy_client_secret }}
+      [forward_auth]
+      client_id={{ auth__forward_auth_client_id }}
+      client_secret={{ auth__forward_auth_client_secret }}
 
       [grafana]
       client_id={{ auth__grafana_oidc_client_id }}
@@ -319,16 +319,14 @@
   become: true
   no_log: true
 
-- name: Re-render oauth2-proxy config with real credentials
+- name: Re-render forward-auth environment with real credentials
   ansible.builtin.template:
-    src: oauth2-proxy.cfg.j2
-    dest: "{{ auth__home_dir }}/oauth2-proxy.cfg"
-    owner: "{{ auth__oauth2_proxy_uid }}"
-    group: "{{ auth__oauth2_proxy_uid }}"
-    mode: '0400'
+    src: forward-auth.env.j2
+    dest: "{{ auth__home_dir }}/forward-auth.env"
+    mode: '0600'
   become: true
   no_log: true
-  notify: Restart oauth2-proxy
+  notify: Recreate forward-auth
 
 - name: Flush handlers after reconcile
   ansible.builtin.meta: flush_handlers
