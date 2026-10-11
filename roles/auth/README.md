@@ -20,6 +20,8 @@ New users — whether they sign up via Google or GitHub — start in the `{{ aut
 
 An admin assigns a user to `{{ auth__org }}/admin`, `{{ auth__org }}/production`, `{{ auth__org }}/demo`, or `{{ auth__org }}/gfx` via the Casdoor web UI (**Groups** page, or editing the user directly) — that's the entire "approve a user" flow. There's no custom action/webhook to maintain.
 
+Groups are read at login and kept in the oauth2-proxy session cookie for `auth__oauth2_proxy_cookie_expire` (168h by default). A user who was just approved (or removed) has to open `https://{{ web_proxy__domain }}/oauth2/sign_out` and sign in again for the change to apply, or wait for the session to run out.
+
 This was verified against a live Casdoor instance (not just documentation), including the exact JWT/`/api/userinfo` payload shape — see the PR history for the token dump.
 
 ## Infrastructure as code

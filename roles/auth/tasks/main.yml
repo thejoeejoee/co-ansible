@@ -30,8 +30,11 @@
   ansible.builtin.template:
     src: oauth2-proxy.cfg.j2
     dest: "{{ auth__home_dir }}/oauth2-proxy.cfg"
-    mode: '0644'
+    owner: "{{ auth__oauth2_proxy_uid }}"
+    group: "{{ auth__oauth2_proxy_uid }}"
+    mode: '0400'
   become: true
+  no_log: true
 
 - name: Create and start auth services
   community.docker.docker_compose_v2:

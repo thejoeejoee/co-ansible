@@ -3,6 +3,15 @@ auth__casdoor_port: 8000
 auth__oauth2_proxy_port: 4180
 auth__casdoor_image: casbin/casdoor:3.159.0
 auth__oauth2_proxy_image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.2
+# The non-root user the oauth2-proxy image runs as. oauth2-proxy.cfg holds
+# the client and cookie secrets, so it is readable by this user only.
+auth__oauth2_proxy_uid: 65532
+
+# How long a sign-in lasts. Groups are read at login and frozen in the
+# session cookie for this long — a user who was just added to (or removed
+# from) a group keeps their old access until they sign out at
+# /oauth2/sign_out and back in, or the session runs out.
+auth__oauth2_proxy_cookie_expire: 168h
 
 # Set to "" (default) to hide Casdoor's floating "AI Assistant" widget —
 # it otherwise embeds an iframe to an external casbin.org-hosted service.
@@ -35,7 +44,7 @@ auth__providers:
 
 # OIDC applications. Every provider in auth__providers above is attached to
 # each of these with signupGroup left empty (default-deny) — see
-# tasks/bootstrap.yml.
+# tasks/reconcile.yml.
 auth__applications:
   - name: oauth2-proxy
     redirect_uri: "https://{{ web_proxy__domain }}/oauth2/callback"
@@ -55,7 +64,7 @@ auth__admin_pass: changeme-in-inventory
 auth__provision_test_users: false
 
 # Placeholder client credentials for the very first oauth2-proxy.cfg render,
-# before tasks/bootstrap.yml creates the real Casdoor applications and
+# before tasks/reconcile.yml creates the real Casdoor applications and
 # re-renders with actual values. oauth2-proxy will simply fail to reach the
 # (not-yet-existing) OIDC client until bootstrap completes.
 auth__oauth2_proxy_client_id: pending-bootstrap

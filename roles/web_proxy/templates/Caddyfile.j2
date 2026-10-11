@@ -7,16 +7,29 @@
 # Reusable SSO gate: forward_auth to oauth2-proxy, then require the caller's
 # X-Auth-Request-Groups header to match the group regex passed as the first
 # snippet argument. Casdoor groups are namespaced "{{ auth__org }}/<name>";
-# new users (Google or manual) start in none of them until an admin adds
+# new users (Google or GitHub) start in none of them until an admin adds
 # them via the Casdoor Groups page — see roles/auth/README.md.
 (require_group) {
-    forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
-        uri /oauth2/auth
-        header_up X-Real-IP {remote_host}
-        copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
-        @unauth status 401
-        handle_response @unauth {
-            redir * /oauth2/sign_in?rd={scheme}://{host}{uri}
+    # Drop whatever the client sent in the identity headers first. For a user
+    # in no group oauth2-proxy returns no X-Auth-Request-Groups at all, and
+    # some Caddy versions (seen on 2.10.2) then leave the client's own header
+    # in place — letting a signed-in user without any group claim one. The
+    # route block is what makes this run before forward_auth: in Caddy's
+    # default directive order request_header comes after it.
+    route {
+        request_header -X-Auth-Request-User
+        request_header -X-Auth-Request-Email
+        request_header -X-Auth-Request-Groups
+        forward_auth localhost:{{ auth__oauth2_proxy_port | default(4180) }} {
+            uri /oauth2/auth
+            header_up X-Real-IP {remote_host}
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+            @unauth status 401
+            handle_response @unauth {
+                # Absolute: /oauth2/* is only routed on the main domain, not
+                # on the subdomain sites (gfx.) that import this gate too.
+                redir * https://{{ web_proxy__domain }}/oauth2/sign_in?rd={scheme}://{host}{uri}
+            }
         }
     }
     @no_group not header_regexp X-Auth-Request-Groups "{args[0]}"

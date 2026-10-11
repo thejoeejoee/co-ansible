@@ -5,6 +5,7 @@ client_secret = "{{ auth__oauth2_proxy_client_secret }}"
 cookie_secret = "{{ auth__oauth2_proxy_cookie_secret }}"
 cookie_domains = ["{{ auth__cookie_domain }}"]
 cookie_secure = true
+cookie_expire = "{{ auth__oauth2_proxy_cookie_expire }}"
 email_domains = ["*"]
 set_xauthrequest = true
 pass_access_token = true
