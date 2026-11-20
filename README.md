@@ -50,9 +50,14 @@ https://csos.josefkolar.cz/snapshots/SLOT.jpg
 
 ### Prerequisites
 
+Control-node toolchain (Ansible + passlib/bcrypt) is pinned in `pyproject.toml` / `uv.lock`:
+
 ```shell
-ansible-galaxy install -r requirements.yml
+uv sync                                              # creates .venv
+uv run ansible-galaxy install -r requirements.yml    # Galaxy roles + collections
 ```
+
+Prefix the commands below with `uv run`, or `source .venv/bin/activate` first.
 
 ### Deploy
 

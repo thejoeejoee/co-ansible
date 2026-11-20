@@ -27,6 +27,7 @@ co-ansible/
 │   │                         # DISABLED in playbook; superseded by csc's gfx SPA.
 │   └── ta/                   # Tally Arbiter via Docker Compose (DISABLED in playbook)
 ├── requirements.yml          # Galaxy roles + collections
+├── pyproject.toml / uv.lock  # Control-node toolchain (ansible, passlib, bcrypt<5) via uv
 └── csos.enc                  # Ansible Vault encrypted secrets
 ```
 
@@ -50,6 +51,7 @@ co-ansible/
 
 - **Variable namespacing**: `rolename__variable` (double underscore) — e.g. `csos_stream_proxy__write_pass`, `web_proxy__domain`, `telemetry__grafana_admin_pass`, `csc__dmr5g_enabled`
 - **No ansible.cfg**: uses Ansible defaults
+- **Toolchain via uv**: `pyproject.toml` + `uv.lock` pin ansible and control-node Python deps; run everything with `uv run`
 - **No linting config**: no ansible-lint, yamllint, or pre-commit
 - **Galaxy roles wrapped in `block: become: true`**: required because `include_role` doesn't propagate `become` to Galaxy role tasks
 - **Caddy config managed outside Galaxy role**: `caddy_config_update: false` disables Galaxy's config write; own `Deploy Caddyfile` task with `validate` + `notify: Restart caddy`
@@ -110,8 +112,10 @@ ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
 ansible-playbook -i inventory/csos.yml playbooks/setup.yml \
   --tags csc,remote_build -e @csos.enc --vault-password-file .pass.env
 
-# Install Galaxy dependencies
-ansible-galaxy install -r requirements.yml
+# Install control-node toolchain (.venv from uv.lock) + Galaxy dependencies
+uv sync
+uv run ansible-galaxy install -r requirements.yml
+# (all commands above: prefix with `uv run` or activate .venv)
 ```
 
 ## NOTES
@@ -123,3 +127,4 @@ ansible-galaxy install -r requirements.yml
 - **admin/gfx build on the control node by default** (`csc__build_remote: "{{ 'remote_build' in ansible_run_tags }}"`). `pnpm --filter ./<app> build` runs in `csc__source_dir` — the *actual* checkout, so `.output/` there gets overwritten and gfx is baked against the deploy target's domain. Only `.output/public/` is rsynced over (`--delete`). Docker images are deliberately outside this switch: they're linux/amd64 and cross-building them on an arm64 laptop is slower than the VM building natively.
 - **DMR 5G stack default-on**: `csc__dmr5g_enabled: true`. Adds ~1–2 GB of tiles per Czech event over time on the shared `otd_tiles` volume. Set to `false` in inventory for deployments that don't handle Czech events — the api cascades to Copernicus GLO-30 with no config change on the api side.
 - **README is stale in one spot** — references `playbooks/templates/` which no longer exists (moved to `roles/stream_proxy/templates/`).
+- **Caddy basic-auth hashing runs on the control node**: `password_hash('blowfish')` in `Caddyfile.j2` needs `passlib` + `bcrypt<5` in ansible's Python (`pyproject.toml`; run via `uv run`). Python 3.13+ has no stdlib `crypt`; bcrypt 5 breaks passlib 1.7.4's load-time self-test ("password cannot be longer than 72 bytes"). `web_proxy` preflight-checks this on localhost.
