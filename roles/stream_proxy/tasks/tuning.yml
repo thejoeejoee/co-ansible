@@ -41,7 +41,18 @@
       net.ipv4.tcp_keepalive_probes=6
     dest: /etc/sysctl.d/90-streaming.conf
     mode: '0644'
-  notify: Reload sysctl
+  register: _streaming_sysctl
+
+# Applied inline, NOT via a handler: handlers flush at the end of the play,
+# but mediamtx is (re)started earlier in this role. Its udpReadBufferSize
+# (4 MB) exceeds the stock net.core.rmem_max (212992), so on a fresh host it
+# would start against the old limit and exit with
+# "unable to set UDP read buffer size".
+- name: Apply streaming sysctl config now
+  become: true
+  ansible.builtin.command:
+    cmd: sysctl -p /etc/sysctl.d/90-streaming.conf
+  when: _streaming_sysctl is changed
 
 - name: Deploy disable-thp systemd unit
   become: true
