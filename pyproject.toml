@@ -1,0 +1,30 @@
+# Control-node toolchain for this Ansible project (the operator's laptop, not the VM).
+# Galaxy roles/collections stay in requirements.yml.
+#
+#   uv sync                                   # create .venv from uv.lock
+#   uv run ansible-galaxy install -r requirements.yml
+#   uv run ansible-playbook -i inventory/orb.yaml playbooks/setup.yml
+[project]
+name = "co-ansible"
+version = "0"
+description = "CSOS livestreaming relay deployment"
+# ansible-core 2.19 needs Python >= 3.11 on the controller.
+requires-python = ">=3.11"
+dependencies = [
+    # Full `ansible` package (core >= 2.19; uv.lock pins the exact one) — ships ansible.posix (synchronize) and
+    # community.general (ufw) that requirements.yml doesn't list.
+    "ansible>=12",
+    # password_hash('blowfish') in roles/web_proxy/templates/Caddyfile.j2 runs on the
+    # control node; Python 3.13 dropped stdlib `crypt`, so passlib is required.
+    "passlib>=1.7.4",
+    # bcrypt 5 raises on >72-byte secrets and passlib 1.7.4's load-time self-test hashes
+    # a 255-byte one, so every password_hash call fails. Keep <5 until passlib is
+    # replaced (e.g. by the `libpass` fork).
+    "bcrypt>=4,<5",
+]
+
+[dependency-groups]
+dev = ["ansible-lint"]
+
+[tool.uv]
+package = false

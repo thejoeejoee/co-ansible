@@ -1,3 +1,27 @@
+- name: Check control node can bcrypt-hash Caddy basic-auth passwords
+  # Caddyfile.j2 uses password_hash('blowfish'), which runs HERE (localhost), not on
+  # the VM. Fail fast with a pointer instead of a cryptic templating error later.
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  ansible.builtin.command:
+    argv:
+      - "{{ ansible_playbook_python }}"
+      - -c
+      - "from passlib.hash import bcrypt; bcrypt.hash('x')"
+  register: web_proxy_passlib_check
+  failed_when: false
+
+- name: Fail if passlib/bcrypt is missing or incompatible on the control node
+  when: web_proxy_passlib_check.rc != 0
+  run_once: true
+  ansible.builtin.fail:
+    msg: |
+      {{ ansible_playbook_python }} cannot bcrypt-hash (needed by Caddyfile.j2):
+      {{ web_proxy_passlib_check.stderr_lines | last | default('') }}
+      Run ansible through the project's uv environment (pyproject.toml):
+        uv sync && uv run ansible-playbook ...
+
 - name: UFW allow 80
   become: true
   ufw:

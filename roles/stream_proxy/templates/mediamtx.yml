@@ -71,8 +71,8 @@ paths:
   # restreaming to arbitrary RTMP/SRT URLs (list loaded from /etc/mediamtx/restream.targets)
   restream:
     alwaysAvailable: false
-    runOnReady: /etc/mediamtx/restream.sh
-    runOnReadyRestart: yes
+    runOnAvailable: /etc/mediamtx/restream.sh
+    runOnAvailableRestart: yes
 
 authInternalUsers:
 {% for cred in credentials.stream_write %}
